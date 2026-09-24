@@ -7,11 +7,9 @@
             (User) session.getAttribute("user");
 
     if (currentUser == null) {
-
         response.sendRedirect("login.jsp");
         return;
     }
-
 
     List<User> users =
             (List<User>) request.getAttribute("users");
@@ -25,1162 +23,1483 @@
     Integer receiverId =
             (Integer) request.getAttribute("receiverId");
 
+    String contextPath =
+            request.getContextPath();
 
-    /*
-     * If users were not loaded yet,
-     * load the page normally.
-     */
+    String currentProfile =
+            currentUser.getProfilePicture();
+
+    if (currentProfile == null ||
+            currentProfile.trim().isEmpty()) {
+
+        currentProfile = "default.png";
+    }
 %>
 
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
 
     <meta charset="UTF-8">
 
-    <title>ConnectChat</title>
-
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
+    <title>ConnectChat</title>
 
     <style>
 
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-
-        html,
         body {
-            width: 100%;
-            height: 100%;
+            background: #eef2f7;
+            height: 100vh;
             overflow: hidden;
         }
 
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f5f7fb;
-        }
-
-
-        /* =========================
-           MAIN
-        ========================= */
-
-        .app {
-
+        .app-container {
             width: 100%;
             height: 100vh;
-
             display: flex;
-
-            overflow: hidden;
         }
 
-
         /* =========================
-           SIDEBAR
-        ========================= */
+           LEFT SIDEBAR
+           ========================= */
 
         .sidebar {
-
-            width: 320px;
-            min-width: 320px;
-
+            width: 340px;
             height: 100vh;
-
-            background:
-                linear-gradient(
-                    180deg,
-                    #5146e5,
-                    #3932a5
-                );
-
-            color: white;
-
-            padding: 28px 24px;
-
-            position: relative;
-
-            overflow-y: auto;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
         }
 
-
-        /* LOGO */
+        .sidebar-header {
+            height: 75px;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #eeeeee;
+        }
 
         .brand {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            margin-bottom: 35px;
-        }
-
-
-        .brand-icon {
-
-            width: 48px;
-            height: 48px;
-
-            border-radius: 14px;
-
-            background: white;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-        }
-
-
-        .brand-icon svg {
-
-            width: 32px;
-            height: 32px;
-        }
-
-
-        .brand-name {
-
-            font-size: 28px;
-
+            font-size: 23px;
             font-weight: 700;
+            color: #2563eb;
         }
 
-
-        /* PROFILE */
-
-        .profile {
-
-            background:
-                rgba(255,255,255,0.16);
-
-            border-radius: 18px;
-
-            padding: 20px;
-
-            margin-bottom: 30px;
-        }
-
-
-        .profile-name {
-
-            font-size: 19px;
-
-            font-weight: 700;
-
-            margin-bottom: 7px;
-        }
-
-
-        .profile-email {
-
-            font-size: 13px;
-
-            opacity: 0.85;
-
-            word-break: break-word;
-        }
-
-
-        /* TITLE */
-
-        .section-title {
-
-            font-size: 12px;
-
-            font-weight: 600;
-
-            letter-spacing: 0.5px;
-
-            margin-bottom: 14px;
-
-            opacity: 0.75;
-        }
-
-
-        /* USERS */
-
-        .user-link {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 13px;
-
-            padding: 14px;
-
-            margin-bottom: 10px;
-
-            border-radius: 16px;
-
-            color: white;
-
-            text-decoration: none;
-
-            background:
-                rgba(255,255,255,0.10);
-
-            transition: 0.2s;
-        }
-
-
-        .user-link:hover {
-
-            background:
-                rgba(255,255,255,0.22);
-        }
-
-
-        .user-link.active {
-
-            background:
-                rgba(255,255,255,0.25);
-        }
-
-
-        .user-avatar {
-
-            width: 46px;
-            height: 46px;
-
-            min-width: 46px;
-
-            border-radius: 50%;
-
-            background: white;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            overflow: hidden;
-        }
-
-
-        .user-avatar svg {
-
-            width: 28px;
-            height: 28px;
-        }
-
-
-        .user-info {
-
-            min-width: 0;
-        }
-
-
-        .user-name {
-
-            font-size: 16px;
-
-            font-weight: 700;
-
-            white-space: nowrap;
-
-            overflow: hidden;
-
-            text-overflow: ellipsis;
-        }
-
-
-        .user-status {
-
-            font-size: 12px;
-
-            margin-top: 5px;
-
-            opacity: 0.75;
-        }
-
-
-        .online-dot {
-
-            color: #4ade80;
-        }
-
-
-        .no-users {
-
-            color: rgba(255,255,255,0.7);
-
-            font-size: 14px;
-
-            padding: 15px 5px;
-        }
-
-
-        /* LOGOUT */
-
-        .logout {
-
-            margin-top: 30px;
-        }
-
-
-        .logout a {
-
-            display: block;
-
-            text-align: center;
-
-            padding: 13px;
-
-            border-radius: 12px;
-
-            background:
-                rgba(255,255,255,0.14);
-
-            color: white;
-
-            text-decoration: none;
-
-            font-weight: 600;
-        }
-
-
-        .logout a:hover {
-
-            background:
-                rgba(255,255,255,0.24);
-        }
-
-
-        /* =========================
-           CHAT AREA
-        ========================= */
-
-        .chat-area {
-
-            flex: 1;
-
-            min-width: 0;
-
-            height: 100vh;
-
-            display: flex;
-
-            flex-direction: column;
-
-            overflow: hidden;
-
-            background: #f8fafc;
-        }
-
-
-        /* HEADER */
-
-        .chat-header {
-
-            height: 88px;
-
-            min-height: 88px;
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 15px;
-
-            padding: 0 30px;
-
-            background: white;
-
-            border-bottom:
-                1px solid #e5e7eb;
-        }
-
-
-        .chat-avatar {
-
-            width: 54px;
-            height: 54px;
-
-            min-width: 54px;
-
-            border-radius: 50%;
-
-            background: #5146e5;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-        }
-
-
-        .chat-avatar svg {
-
-            width: 30px;
-            height: 30px;
-        }
-
-
-        .chat-user-name {
-
+        .brand span {
             color: #111827;
-
-            font-size: 20px;
-
-            font-weight: 700;
         }
 
+        .profile-small {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-        .chat-status {
+        .profile-small img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #2563eb;
+        }
 
-            color: #22c55e;
+        .profile-small-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+        }
 
+        /* =========================
+           PROFILE AREA
+           ========================= */
+
+        .profile-section {
+            padding: 20px;
+            background: linear-gradient(
+                135deg,
+                #2563eb,
+                #4f46e5
+            );
+            color: white;
+        }
+
+        .profile-main {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .profile-main img {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+        }
+
+        .profile-info h3 {
+            font-size: 17px;
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
             font-size: 13px;
-
-            margin-top: 5px;
+            opacity: 0.9;
         }
 
-
-        /* =========================
-           MESSAGES
-        ========================= */
-
-        .messages {
-
-            flex: 1;
-
-            min-height: 0;
-
-            overflow-y: auto;
-
-            padding: 30px;
-        }
-
-
-        .empty-chat {
-
+        .change-photo-button {
             width: 100%;
-
-            height: 100%;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            text-align: center;
-        }
-
-
-        .empty-icon {
-
-            width: 90px;
-            height: 90px;
-
-            margin: auto;
-
-            margin-bottom: 20px;
-
-            border-radius: 28px;
-
-            background: #eef2ff;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-        }
-
-
-        .empty-icon svg {
-
-            width: 50px;
-            height: 50px;
-        }
-
-
-        .empty-chat h2 {
-
-            color: #64748b;
-
-            margin-bottom: 8px;
-        }
-
-
-        .empty-chat p {
-
-            color: #94a3b8;
-        }
-
-
-        /* MESSAGE */
-
-        .message {
-
-            display: flex;
-
-            width: 100%;
-
-            margin-bottom: 16px;
-        }
-
-
-        .message.sent {
-
-            justify-content: flex-end;
-        }
-
-
-        .message.received {
-
-            justify-content: flex-start;
-        }
-
-
-        .message-bubble {
-
-            max-width: 65%;
-
-            padding: 13px 17px;
-
-            border-radius: 17px;
-
-            background: white;
-
-            color: #334155;
-
-            box-shadow:
-                0 2px 8px
-                rgba(0,0,0,0.06);
-
-            overflow-wrap: anywhere;
-        }
-
-
-        .message.sent
-        .message-bubble {
-
-            background: #5146e5;
-
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
             color: white;
-
-            border-bottom-right-radius: 5px;
-        }
-
-
-        .message.received
-        .message-bubble {
-
-            border-bottom-left-radius: 5px;
-        }
-
-
-        /* =========================
-           INPUT
-        ========================= */
-
-        .message-form {
-
-            width: 100%;
-
-            min-height: 82px;
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            padding: 16px 25px;
-
-            background: white;
-
-            border-top:
-                1px solid #e5e7eb;
-        }
-
-
-        .message-input {
-
-            flex: 1;
-
-            height: 50px;
-
-            border:
-                1px solid #d1d5db;
-
-            border-radius: 25px;
-
-            padding: 0 20px;
-
-            outline: none;
-
-            font-size: 15px;
-        }
-
-
-        .message-input:focus {
-
-            border-color: #5146e5;
-
-            box-shadow:
-                0 0 0 3px
-                rgba(81,70,229,0.1);
-        }
-
-
-        .send-button {
-
-            height: 50px;
-
-            border: none;
-
-            border-radius: 25px;
-
-            padding: 0 25px;
-
-            background: #5146e5;
-
-            color: white;
-
-            font-size: 15px;
-
-            font-weight: 700;
-
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
         }
 
-
-        .send-button:hover {
-
-            background: #3932a5;
+        .change-photo-button:hover {
+            background: rgba(255,255,255,0.25);
         }
 
+        /* =========================
+           SEARCH
+           ========================= */
+
+        .search-box {
+            padding: 15px;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            background: #f8fafc;
+        }
+
+        .search-box input:focus {
+            border-color: #2563eb;
+        }
+
+        /* =========================
+           USER LIST
+           ========================= */
+
+        .users-title {
+            padding: 15px 20px 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .users-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .user-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 18px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .user-link:hover {
+            background: #f1f5f9;
+        }
+
+        .user-link.active {
+            background: #e8f0ff;
+            border-left: 4px solid #2563eb;
+        }
+
+        .user-avatar {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #e5e7eb;
+        }
+
+        .user-details {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .user-status {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .online-dot {
+            color: #22c55e;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        .offline-dot {
+            color: #9ca3af;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        /* =========================
+           CHAT AREA
+           ========================= */
+
+        .chat-container {
+            flex: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        .chat-header {
+            height: 75px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 12px 22px;
+        }
+
+        .chat-header-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header-user img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #e5e7eb;
+        }
+
+        .chat-header-info h3 {
+            font-size: 16px;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .chat-status {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* =========================
+           EMPTY CHAT
+           ========================= */
+
+        .empty-chat {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .empty-chat-content {
+            max-width: 420px;
+        }
+
+        .empty-chat-content h2 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 25px;
+        }
+
+        .empty-chat-content p {
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* =========================
+           MESSAGES
+           ========================= */
+
+        .messages-area {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            display: flex;
+            width: 100%;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message.received {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 65%;
+            padding: 11px 15px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-bubble {
+            background: #2563eb;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            color: #1f2937;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* =========================
+           MESSAGE FORM
+           ========================= */
+
+        .message-form-container {
+            padding: 15px 20px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .message-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 13px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+            background: #f9fafb;
+        }
+
+        .message-input:focus {
+            border-color: #2563eb;
+            background: white;
+        }
+
+        .send-button {
+            padding: 13px 24px;
+            border: none;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .send-button:hover {
+            background: #1d4ed8;
+        }
+
+        .send-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* =========================
+           SCROLLBAR
+           ========================= */
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        /* =========================
+           RESPONSIVE
+           ========================= */
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                width: 280px;
+            }
+
+            .message-bubble {
+                max-width: 80%;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .chat-container {
+                display: none;
+            }
+
+            .sidebar-header {
+                height: 65px;
+            }
+        }
 
     </style>
 
 </head>
 
-
 <body>
 
+<div class="app-container">
 
-<div class="app">
-
-
-    <!-- =========================
-         SIDEBAR
-    ========================== -->
+    <!-- ==========================================
+         LEFT SIDEBAR
+         ========================================== -->
 
     <aside class="sidebar">
 
+        <!-- Header -->
 
-        <!-- LOGO -->
+        <div class="sidebar-header">
 
-        <div class="brand">
-
-            <div class="brand-icon">
-
-                <svg viewBox="0 0 64 64">
-
-                    <path
-                        d="M10 12h44a6 6 0 0 1 6 6v27a6 6 0 0 1-6 6H34L22 59v-8H10a6 6 0 0 1-6-6V18a6 6 0 0 1 6-6z"
-                        fill="#5146e5"/>
-
-                    <circle
-                        cx="22"
-                        cy="31"
-                        r="4"
-                        fill="white"/>
-
-                    <circle
-                        cx="32"
-                        cy="31"
-                        r="4"
-                        fill="white"/>
-
-                    <circle
-                        cx="42"
-                        cy="31"
-                        r="4"
-                        fill="white"/>
-
-                </svg>
-
+            <div class="brand">
+                Connect<span>Chat</span>
             </div>
 
+            <div class="profile-small">
 
-            <div class="brand-name">
-                ConnectChat
-            </div>
-
-        </div>
-
-
-        <!-- PROFILE -->
-
-        <div class="profile">
-
-            <div class="profile-name">
-
-                <%= currentUser.getUsername() %>
-
-            </div>
-
-
-            <div class="profile-email">
-
-                <%= currentUser.getEmail() %>
+                <img
+                    src="<%= contextPath %>/uploads/profiles/<%= currentProfile %>"
+                    alt="Profile"
+                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                >
 
             </div>
 
         </div>
 
 
-        <!-- USERS -->
+        <!-- Current User Profile -->
 
-        <div class="section-title">
+        <div class="profile-section">
 
-            CONVERSATIONS
+            <div class="profile-main">
 
-        </div>
+                <img
+                    src="<%= contextPath %>/uploads/profiles/<%= currentProfile %>"
+                    alt="Profile"
+                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                >
 
+                <div class="profile-info">
 
-        <%
+                    <h3>
+                        <%= currentUser.getUsername() %>
+                    </h3>
 
-            if (users != null &&
-                !users.isEmpty()) {
-
-                for (User chatUser : users) {
-
-                    boolean active =
-                        receiverId != null &&
-                        receiverId == chatUser.getId();
-
-        %>
-
-
-        <a
-            class="user-link <%= active ? "active" : "" %>"
-            href="messages?receiverId=<%= chatUser.getId() %>">
-
-
-            <div class="user-avatar">
-
-                <svg viewBox="0 0 64 64">
-
-                    <circle
-                        cx="32"
-                        cy="32"
-                        r="30"
-                        fill="#5146e5"/>
-
-                    <circle
-                        cx="32"
-                        cy="25"
-                        r="10"
-                        fill="white"/>
-
-                    <path
-                        d="M15 51c3-11 10-16 17-16s14 5 17 16"
-                        fill="white"/>
-
-                </svg>
-
-            </div>
-
-
-            <div class="user-info">
-
-                <div class="user-name">
-
-                    <%= chatUser.getUsername() %>
-
-                </div>
-
-
-                <div class="user-status">
-
-                    <span class="online-dot">●</span>
-
-                    Online
+                    <p>
+                        <%= currentUser.getEmail() %>
+                    </p>
 
                 </div>
 
             </div>
 
 
-        </a>
+            <!-- Profile Picture Form -->
 
+            <form
+                id="photoForm"
+                action="<%= contextPath %>/profile"
+                method="post"
+                enctype="multipart/form-data"
+            >
 
-        <%
+                <input
+                    type="file"
+                    id="profilePicture"
+                    name="profilePicture"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    style="display:none"
+                    onchange="document.getElementById('photoForm').submit();"
+                >
 
-                }
+                <button
+                    type="button"
+                    class="change-photo-button"
+                    onclick="document.getElementById('profilePicture').click();"
+                >
+                    Change Photo
+                </button>
 
-            } else {
-
-        %>
-
-
-        <div class="no-users">
-
-            No other users registered yet.
+            </form>
 
         </div>
 
 
-        <%
+        <!-- Search -->
 
-            }
+        <div class="search-box">
 
-        %>
+            <input
+                type="text"
+                id="searchUsers"
+                placeholder="Search users..."
+                autocomplete="off"
+            >
+
+        </div>
 
 
-        <!-- LOGOUT -->
+        <div class="users-title">
+            Users
+        </div>
 
-        <div class="logout">
 
-            <a href="logout">
+        <!-- User List -->
 
-                Logout
+        <div class="users-list" id="usersList">
+
+            <%
+                if (users != null && !users.isEmpty()) {
+
+                    for (User chatUser : users) {
+
+                        boolean active =
+                                receiverId != null &&
+                                receiverId == chatUser.getId();
+
+                        String profile =
+                                chatUser.getProfilePicture();
+
+                        if (profile == null ||
+                                profile.trim().isEmpty()) {
+
+                            profile = "default.png";
+                        }
+            %>
+
+            <a
+                href="<%= contextPath %>/messages?receiverId=<%= chatUser.getId() %>"
+                class="user-link <%= active ? "active" : "" %>"
+                data-user-id="<%= chatUser.getId() %>"
+            >
+
+                <div class="user-avatar">
+
+                    <img
+                        src="<%= contextPath %>/uploads/profiles/<%= profile %>"
+                        alt="Profile"
+                        onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                    >
+
+                </div>
+
+
+                <div class="user-details">
+
+                    <div class="user-name">
+                        <%= chatUser.getUsername() %>
+                    </div>
+
+                    <div class="user-status">
+
+                        <span class="offline-dot">
+                            ●
+                        </span>
+
+                        Offline
+
+                    </div>
+
+                </div>
 
             </a>
 
-        </div>
+            <%
+                    }
 
+                } else {
+            %>
+
+            <div style="
+                padding:30px 20px;
+                text-align:center;
+                color:#9ca3af;
+                font-size:14px;
+            ">
+                No other users found.
+            </div>
+
+            <%
+                }
+            %>
+
+        </div>
 
     </aside>
 
 
-    <!-- =========================
+    <!-- ==========================================
          CHAT AREA
-    ========================== -->
+         ========================================== -->
 
-    <main class="chat-area">
+    <main class="chat-container">
 
 
-        <!-- HEADER -->
+        <%
+            if (receiver != null) {
+
+                String receiverProfile =
+                        receiver.getProfilePicture();
+
+                if (receiverProfile == null ||
+                        receiverProfile.trim().isEmpty()) {
+
+                    receiverProfile = "default.png";
+                }
+        %>
+
+
+        <!-- Chat Header -->
 
         <header class="chat-header">
 
+            <div class="chat-header-user">
 
-            <div class="chat-avatar">
+                <img
+                    src="<%= contextPath %>/uploads/profiles/<%= receiverProfile %>"
+                    alt="Profile"
+                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                >
 
-                <svg viewBox="0 0 64 64">
+                <div class="chat-header-info">
 
-                    <circle
-                        cx="32"
-                        cy="32"
-                        r="30"
-                        fill="white"/>
+                    <h3>
+                        <%= receiver.getUsername() %>
+                    </h3>
 
-                    <circle
-                        cx="32"
-                        cy="25"
-                        r="10"
-                        fill="#5146e5"/>
+                    <div
+                        class="chat-status"
+                        id="chatStatus"
+                    >
 
-                    <path
-                        d="M15 51c3-11 10-16 17-16s14 5 17 16"
-                        fill="#5146e5"/>
+                        <span class="offline-dot">
+                            ●
+                        </span>
 
-                </svg>
+                        Offline
+
+                    </div>
+
+                </div>
 
             </div>
-
-
-            <div>
-
-                <%
-
-                    if (receiver != null) {
-
-                %>
-
-
-                <div class="chat-user-name">
-
-                    <%= receiver.getUsername() %>
-
-                </div>
-
-
-                <div class="chat-status">
-
-                    ● Online
-
-                </div>
-
-
-                <%
-
-                    } else {
-
-                %>
-
-
-                <div class="chat-user-name">
-
-                    Select a user
-
-                </div>
-
-
-                <div class="chat-status">
-
-                    Choose someone to start chatting
-
-                </div>
-
-
-                <%
-
-                    }
-
-                %>
-
-            </div>
-
 
         </header>
 
 
-        <!-- =========================
-             MESSAGE AREA
-        ========================== -->
+        <!-- Messages -->
 
-        <section class="messages">
-
-
-            <%
-
-                if (receiver == null) {
-
-            %>
-
-
-            <div class="empty-chat">
-
-                <div>
-
-                    <div class="empty-icon">
-
-                        <svg viewBox="0 0 64 64">
-
-                            <path
-                                d="M10 10h44a7 7 0 0 1 7 7v27a7 7 0 0 1-7 7H35L22 59v-8H10a7 7 0 0 1-7-7V17a7 7 0 0 1 7-7z"
-                                fill="#5146e5"/>
-
-                            <circle
-                                cx="22"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                            <circle
-                                cx="32"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                            <circle
-                                cx="42"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                        </svg>
-
-                    </div>
-
-
-                    <h2>
-
-                        Select a conversation
-
-                    </h2>
-
-
-                    <p>
-
-                        Choose a user from the left.
-
-                    </p>
-
-                </div>
-
-            </div>
-
+        <div
+            class="messages-area"
+            id="messagesArea"
+        >
 
             <%
+                if (messages != null &&
+                        !messages.isEmpty()) {
 
-                } else if
-                (messages == null ||
-                 messages.isEmpty()) {
-
-            %>
-
-
-            <div class="empty-chat">
-
-                <div>
-
-                    <div class="empty-icon">
-
-                        <svg viewBox="0 0 64 64">
-
-                            <path
-                                d="M10 10h44a7 7 0 0 1 7 7v27a7 7 0 0 1-7 7H35L22 59v-8H10a7 7 0 0 1-7-7V17a7 7 0 0 1 7-7z"
-                                fill="#5146e5"/>
-
-                            <circle
-                                cx="22"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                            <circle
-                                cx="32"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                            <circle
-                                cx="42"
-                                cy="31"
-                                r="4"
-                                fill="white"/>
-
-                        </svg>
-
-                    </div>
-
-
-                    <h2>
-
-                        Start a conversation
-
-                    </h2>
-
-
-                    <p>
-
-                        Send your first message to
-                        <%= receiver.getUsername() %>
-
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <%
-
-                } else {
-
-                    for (Message msg : messages) {
+                    for (Message message : messages) {
 
                         boolean sent =
-                            msg.getSenderId()
-                            == currentUser.getId();
-
+                                message.getSenderId()
+                                == currentUser.getId();
             %>
 
-
-            <div class="message
-                <%= sent ? "sent" : "received" %>">
-
+            <div
+                class="message <%= sent ? "sent" : "received" %>"
+            >
 
                 <div class="message-bubble">
 
-                    <%= msg.getMessage() %>
+                    <%= message.getMessage() %>
 
                 </div>
 
+            </div>
+
+            <%
+                    }
+
+                } else {
+            %>
+
+            <div
+                id="emptyConversation"
+                style="
+                    text-align:center;
+                    color:#9ca3af;
+                    font-size:14px;
+                    margin:auto;
+                "
+            >
+                No messages yet. Start the conversation.
+            </div>
+
+            <%
+                }
+            %>
+
+        </div>
+
+
+        <!-- Message Input -->
+
+        <div class="message-form-container">
+
+            <div class="message-form">
+
+                <input
+                    type="text"
+                    id="messageInput"
+                    class="message-input"
+                    placeholder="Type a message..."
+                    autocomplete="off"
+                >
+
+                <button
+                    type="button"
+                    id="sendButton"
+                    class="send-button"
+                    onclick="sendMessage()"
+                >
+                    Send
+                </button>
 
             </div>
 
+        </div>
 
-            <%
+
+        <%
+            } else {
+        %>
+
+
+        <!-- No Chat Selected -->
+
+        <div class="empty-chat">
+
+            <div class="empty-chat-content">
+
+                <h2>
+                    Welcome to ConnectChat
+                </h2>
+
+                <p>
+                    Select a user from the left side
+                    to start a conversation.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <%
+            }
+        %>
+
+    </main>
+
+</div>
+
+
+<script>
+
+    /* ==========================================
+       USER INFORMATION
+       ========================================== */
+
+    const currentUserId =
+        <%= currentUser.getId() %>;
+
+    const receiverId =
+        <%= receiverId != null
+                ? receiverId
+                : "null" %>;
+
+    const contextPath =
+        "<%= contextPath %>";
+
+
+    /* ==========================================
+       WEBSOCKET
+       ========================================== */
+
+    let socket = null;
+
+    let reconnectTimer = null;
+
+
+    function connectWebSocket() {
+
+        if (socket !== null &&
+            socket.readyState === WebSocket.OPEN) {
+
+            return;
+        }
+
+
+        const protocol =
+            window.location.protocol === "https:"
+                ? "wss://"
+                : "ws://";
+
+
+        const socketUrl =
+            protocol +
+            window.location.host +
+            contextPath +
+            "/chat?userId=" +
+            currentUserId;
+
+
+        console.log(
+            "Connecting WebSocket:",
+            socketUrl
+        );
+
+
+        socket =
+            new WebSocket(socketUrl);
+
+
+        socket.onopen =
+            function () {
+
+                console.log(
+                    "WebSocket connected"
+                );
+
+                const sendButton =
+                    document.getElementById(
+                        "sendButton"
+                    );
+
+                if (sendButton) {
+
+                    sendButton.disabled = false;
+
+                }
+
+            };
+
+
+        socket.onmessage =
+            function (event) {
+
+                const data =
+                    event.data;
+
+
+                console.log(
+                    "WebSocket message:",
+                    data
+                );
+
+
+                /* Online users */
+
+                if (
+                    data.startsWith("ONLINE|")
+                ) {
+
+                    const onlineIds =
+                        data.substring(7);
+
+                    updateOnlineUsers(
+                        onlineIds
+                    );
+
+                    return;
+                }
+
+
+                /* Chat message */
+
+                if (
+                    data.startsWith("MESSAGE|")
+                ) {
+
+                    displayIncomingMessage(
+                        data
+                    );
+
+                    return;
+                }
+
+            };
+
+
+        socket.onclose =
+            function () {
+
+                console.log(
+                    "WebSocket disconnected"
+                );
+
+
+                const sendButton =
+                    document.getElementById(
+                        "sendButton"
+                    );
+
+                if (sendButton) {
+
+                    sendButton.disabled = true;
+
+                }
+
+
+                clearTimeout(
+                    reconnectTimer
+                );
+
+
+                reconnectTimer =
+                    setTimeout(
+                        connectWebSocket,
+                        3000
+                    );
+
+            };
+
+
+        socket.onerror =
+            function (error) {
+
+                console.error(
+                    "WebSocket error:",
+                    error
+                );
+
+            };
+
+    }
+
+
+    /* ==========================================
+       SEND MESSAGE
+       ========================================== */
+
+    function sendMessage() {
+
+        const input =
+            document.getElementById(
+                "messageInput"
+            );
+
+
+        if (!input) {
+            return;
+        }
+
+
+        const message =
+            input.value.trim();
+
+
+        if (message === "") {
+
+            return;
+
+        }
+
+
+        if (receiverId === null) {
+
+            return;
+
+        }
+
+
+        if (
+            socket === null ||
+            socket.readyState !== WebSocket.OPEN
+        ) {
+
+            alert(
+                "Chat connection is not ready. Please wait."
+            );
+
+            return;
+
+        }
+
+
+        const data =
+            "PRIVATE|" +
+            currentUserId +
+            "|" +
+            receiverId +
+            "|" +
+            message;
+
+
+        socket.send(data);
+
+
+        input.value = "";
+
+        input.focus();
+
+    }
+
+
+    /* ==========================================
+       DISPLAY RECEIVED MESSAGE
+       ========================================== */
+
+    function displayIncomingMessage(data) {
+
+        const parts =
+            data.split("|");
+
+
+        if (parts.length < 4) {
+
+            return;
+
+        }
+
+
+        const senderId =
+            parseInt(parts[1]);
+
+
+        const receivedReceiverId =
+            parseInt(parts[2]);
+
+
+        const message =
+            parts.slice(3).join("|");
+
+
+        /*
+         * Only display messages belonging
+         * to the currently opened conversation.
+         */
+
+        if (receiverId === null) {
+
+            return;
+
+        }
+
+
+        if (
+            senderId !== currentUserId &&
+            senderId !== receiverId
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            receivedReceiverId !== currentUserId &&
+            receivedReceiverId !== receiverId
+        ) {
+
+            return;
+
+        }
+
+
+        const messagesArea =
+            document.getElementById(
+                "messagesArea"
+            );
+
+
+        if (!messagesArea) {
+
+            return;
+
+        }
+
+
+        /* Remove "No messages yet" */
+
+        const emptyConversation =
+            document.getElementById(
+                "emptyConversation"
+            );
+
+
+        if (emptyConversation) {
+
+            emptyConversation.remove();
+
+        }
+
+
+        const messageDiv =
+            document.createElement(
+                "div"
+            );
+
+
+        if (senderId === currentUserId) {
+
+            messageDiv.className =
+                "message sent";
+
+        } else {
+
+            messageDiv.className =
+                "message received";
+
+        }
+
+
+        const bubble =
+            document.createElement(
+                "div"
+            );
+
+
+        bubble.className =
+            "message-bubble";
+
+
+        /*
+         * textContent is used instead of
+         * innerHTML for message safety.
+         */
+
+        bubble.textContent =
+            message;
+
+
+        messageDiv.appendChild(
+            bubble
+        );
+
+
+        messagesArea.appendChild(
+            messageDiv
+        );
+
+
+        scrollToBottom();
+
+    }
+
+
+    /* ==========================================
+       ONLINE / OFFLINE USERS
+       ========================================== */
+
+    function updateOnlineUsers(
+        userIds
+    ) {
+
+        const onlineIds =
+            userIds
+                .split(",")
+                .filter(
+                    function(id) {
+                        return id !== "";
+                    }
+                )
+                .map(
+                    function(id) {
+                        return parseInt(id);
+                    }
+                );
+
+
+        /*
+         * Update users in sidebar
+         */
+
+        document
+            .querySelectorAll(".user-link")
+            .forEach(
+                function(userElement) {
+
+                    const userId =
+                        parseInt(
+                            userElement.dataset.userId
+                        );
+
+
+                    const statusElement =
+                        userElement.querySelector(
+                            ".user-status"
+                        );
+
+
+                    if (!statusElement) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        onlineIds.includes(
+                            userId
+                        )
+                    ) {
+
+                        statusElement.innerHTML =
+                            '<span class="online-dot">●</span> Online';
+
+                    } else {
+
+                        statusElement.innerHTML =
+                            '<span class="offline-dot">●</span> Offline';
 
                     }
 
                 }
-
-            %>
-
-
-        </section>
+            );
 
 
-        <!-- =========================
-             SEND MESSAGE
-        ========================== -->
+        /*
+         * Update selected user's status
+         */
+
+        if (receiverId !== null) {
+
+            const headerStatus =
+                document.getElementById(
+                    "chatStatus"
+                );
 
 
-        <%
+            if (headerStatus) {
 
-            if (receiver != null) {
+                if (
+                    onlineIds.includes(
+                        receiverId
+                    )
+                ) {
 
-        %>
+                    headerStatus.innerHTML =
+                        '<span class="online-dot">●</span> Online';
 
+                } else {
 
-        <form
-            class="message-form"
-            action="messages"
-            method="post">
+                    headerStatus.innerHTML =
+                        '<span class="offline-dot">●</span> Offline';
 
-
-            <input
-                type="hidden"
-                name="receiverId"
-                value="<%= receiver.getId() %>">
-
-
-            <input
-                type="text"
-                name="message"
-                class="message-input"
-                placeholder="Type a message..."
-                autocomplete="off"
-                required>
-
-
-            <button
-                type="submit"
-                class="send-button">
-
-                Send
-
-            </button>
-
-
-        </form>
-
-
-        <%
+                }
 
             }
 
-        %>
+        }
+
+    }
 
 
-    </main>
+    /* ==========================================
+       SEARCH USERS
+       ========================================== */
+
+    const searchInput =
+        document.getElementById(
+            "searchUsers"
+        );
 
 
-</div>
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "input",
+            function() {
+
+                const searchText =
+                    this.value
+                        .toLowerCase()
+                        .trim();
+
+
+                const userLinks =
+                    document.querySelectorAll(
+                        ".user-link"
+                    );
+
+
+                userLinks.forEach(
+                    function(userLink) {
+
+                        const name =
+                            userLink
+                                .querySelector(
+                                    ".user-name"
+                                )
+                                .textContent
+                                .toLowerCase();
+
+
+                        if (
+                            name.includes(
+                                searchText
+                            )
+                        ) {
+
+                            userLink.style.display =
+                                "flex";
+
+                        } else {
+
+                            userLink.style.display =
+                                "none";
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ==========================================
+       ENTER TO SEND
+       ========================================== */
+
+    const messageInput =
+        document.getElementById(
+            "messageInput"
+        );
+
+
+    if (messageInput) {
+
+        messageInput.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    sendMessage();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* ==========================================
+       SCROLL TO BOTTOM
+       ========================================== */
+
+    function scrollToBottom() {
+
+        const messagesArea =
+            document.getElementById(
+                "messagesArea"
+            );
+
+
+        if (messagesArea) {
+
+            messagesArea.scrollTop =
+                messagesArea.scrollHeight;
+
+        }
+
+    }
+
+
+    /* ==========================================
+       START APPLICATION
+       ========================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function() {
+
+            scrollToBottom();
+
+            connectWebSocket();
+
+        }
+    );
+
+</script>
 
 
 </body>

@@ -18,82 +18,11 @@ import java.util.List;
 @WebServlet("/messages")
 public class MessageServlet extends HttpServlet {
 
-    private MessageDAO messageDAO;
-    private UserDAO userDAO;
+    private final MessageDAO messageDAO =
+            new MessageDAO();
 
-
-    @Override
-    public void init() {
-
-        messageDAO = new MessageDAO();
-        userDAO = new UserDAO();
-    }
-
-
-    // SEND MESSAGE
-
-    @Override
-    protected void doPost(
-            HttpServletRequest request,
-            HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession session =
-                request.getSession(false);
-
-        if (session == null ||
-            session.getAttribute("user") == null) {
-
-            response.sendRedirect("login.jsp");
-            return;
-        }
-
-
-        User currentUser =
-                (User) session.getAttribute("user");
-
-
-        String receiverIdText =
-                request.getParameter("receiverId");
-
-        String messageText =
-                request.getParameter("message");
-
-
-        if (receiverIdText == null ||
-            messageText == null ||
-            messageText.trim().isEmpty()) {
-
-            response.sendRedirect("chat.jsp");
-            return;
-        }
-
-
-        int receiverId =
-                Integer.parseInt(receiverIdText);
-
-
-        Message message =
-                new Message(
-                        currentUser.getId(),
-                        receiverId,
-                        messageText.trim()
-                );
-
-
-        boolean sent =
-                messageDAO.sendMessage(message);
-
-
-        // After sending, open same conversation
-
-        response.sendRedirect(
-                "messages?receiverId=" + receiverId
-        );
-    }
-
-
-    // LOAD CONVERSATION
+    private final UserDAO userDAO =
+            new UserDAO();
 
     @Override
     protected void doGet(
@@ -105,81 +34,107 @@ public class MessageServlet extends HttpServlet {
                 request.getSession(false);
 
         if (session == null ||
-            session.getAttribute("user") == null) {
+                session.getAttribute("user") == null) {
 
             response.sendRedirect("login.jsp");
             return;
         }
 
-
         User currentUser =
                 (User) session.getAttribute("user");
 
-
-        String receiverIdText =
+        String receiverParameter =
                 request.getParameter("receiverId");
 
+        Integer receiverId = null;
 
-        if (receiverIdText == null) {
+        if (receiverParameter != null &&
+                !receiverParameter.isEmpty()) {
 
-            response.sendRedirect("chat.jsp");
-            return;
+            try {
+
+                receiverId =
+                        Integer.parseInt(
+                                receiverParameter
+                        );
+
+            } catch (NumberFormatException e) {
+
+                receiverId = null;
+            }
         }
-
-
-        int receiverId =
-                Integer.parseInt(receiverIdText);
-
-
-        // Get messages
-
-        List<Message> messages =
-                messageDAO.getConversation(
-                        currentUser.getId(),
-                        receiverId
-                );
-
-
-        // Get receiver information
-
-        User receiver =
-                userDAO.getUserById(receiverId);
-
-
-        // Get all users
 
         List<User> users =
                 userDAO.getAllUsers(
                         currentUser.getId()
                 );
 
+        List<Message> messages =
+                new java.util.ArrayList<>();
 
-        request.setAttribute(
-                "messages",
-                messages
-        );
+        User receiver = null;
 
+        if (receiverId != null) {
 
-        request.setAttribute(
-                "receiverId",
-                receiverId
-        );
+            messages =
+                    messageDAO.getConversation(
+                            currentUser.getId(),
+                            receiverId
+                    );
 
-
-        request.setAttribute(
-                "receiver",
-                receiver
-        );
-
+            receiver =
+                    userDAO.getUserById(
+                            receiverId
+                    );
+        }
 
         request.setAttribute(
                 "users",
                 users
         );
 
+        request.setAttribute(
+                "messages",
+                messages
+        );
+
+        request.setAttribute(
+                "receiver",
+                receiver
+        );
+
+        request.setAttribute(
+                "receiverId",
+                receiverId
+        );
 
         request.getRequestDispatcher(
                 "chat.jsp"
-        ).forward(request, response);
+        ).forward(
+                request,
+                response
+        );
+    }
+
+    @Override
+    protected void doPost(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws IOException {
+
+        /*
+         * Message saving is now handled by WebSocket.
+         * This POST is intentionally not used for messages.
+         */
+
+        String receiverId =
+                request.getParameter(
+                        "receiverId"
+                );
+
+        response.sendRedirect(
+                "messages?receiverId="
+                        + receiverId
+        );
     }
 }
