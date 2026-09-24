@@ -1,7 +1,9 @@
 package com.connectchat.controller;
 
+import com.connectchat.dao.GroupDAO;
 import com.connectchat.dao.MessageDAO;
 import com.connectchat.dao.UserDAO;
+import com.connectchat.model.ChatGroup;
 import com.connectchat.model.Message;
 import com.connectchat.model.User;
 
@@ -13,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @WebServlet("/messages")
@@ -24,6 +27,10 @@ public class MessageServlet extends HttpServlet {
     private final UserDAO userDAO =
             new UserDAO();
 
+    private final GroupDAO groupDAO =
+            new GroupDAO();
+
+
     @Override
     protected void doGet(
             HttpServletRequest request,
@@ -33,6 +40,7 @@ public class MessageServlet extends HttpServlet {
         HttpSession session =
                 request.getSession(false);
 
+        // Check login
         if (session == null ||
                 session.getAttribute("user") == null) {
 
@@ -42,6 +50,21 @@ public class MessageServlet extends HttpServlet {
 
         User currentUser =
                 (User) session.getAttribute("user");
+
+
+        // =========================
+        // AVAILABLE USERS
+        // =========================
+
+        List<User> users =
+                userDAO.getAllUsers(
+                        currentUser.getId()
+                );
+
+
+        // =========================
+        // USER CHAT
+        // =========================
 
         String receiverParameter =
                 request.getParameter("receiverId");
@@ -64,15 +87,12 @@ public class MessageServlet extends HttpServlet {
             }
         }
 
-        List<User> users =
-                userDAO.getAllUsers(
-                        currentUser.getId()
-                );
-
-        List<Message> messages =
-                new java.util.ArrayList<>();
 
         User receiver = null;
+
+        List<Message> messages =
+                new ArrayList<>();
+
 
         if (receiverId != null) {
 
@@ -87,6 +107,82 @@ public class MessageServlet extends HttpServlet {
                             receiverId
                     );
         }
+
+
+        // =========================
+        // GROUPS
+        // =========================
+
+        List<ChatGroup> groups =
+                groupDAO.getGroupsForUser(
+                        currentUser.getId()
+                );
+
+
+        // =========================
+        // SELECTED GROUP
+        // =========================
+
+        String groupIdParameter =
+                request.getParameter("groupId");
+
+        Integer groupId = null;
+
+        ChatGroup selectedGroup = null;
+
+        List<Message> groupMessages =
+                new ArrayList<>();
+
+
+        if (groupIdParameter != null &&
+                !groupIdParameter.isEmpty()) {
+
+            try {
+
+                groupId =
+                        Integer.parseInt(
+                                groupIdParameter
+                        );
+
+            } catch (NumberFormatException e) {
+
+                groupId = null;
+            }
+        }
+
+
+        if (groupId != null) {
+
+            // Security check:
+            // user must belong to group
+            if (groupDAO.isMember(
+                    groupId,
+                    currentUser.getId())) {
+
+                groupMessages =
+                        messageDAO.getGroupMessages(
+                                groupId
+                        );
+
+                // Find selected group
+                for (ChatGroup group : groups) {
+
+                    if (group.getId() == groupId) {
+
+                        selectedGroup = group;
+                        break;
+                    }
+                }
+            } else {
+
+                groupId = null;
+            }
+        }
+
+
+        // =========================
+        // SEND DATA TO JSP
+        // =========================
 
         request.setAttribute(
                 "users",
@@ -108,6 +204,28 @@ public class MessageServlet extends HttpServlet {
                 receiverId
         );
 
+        request.setAttribute(
+                "groups",
+                groups
+        );
+
+        request.setAttribute(
+                "selectedGroup",
+                selectedGroup
+        );
+
+        request.setAttribute(
+                "groupMessages",
+                groupMessages
+        );
+
+        request.setAttribute(
+                "groupId",
+                groupId
+        );
+
+
+        // Open chat page
         request.getRequestDispatcher(
                 "chat.jsp"
         ).forward(
@@ -116,25 +234,50 @@ public class MessageServlet extends HttpServlet {
         );
     }
 
+
     @Override
     protected void doPost(
             HttpServletRequest request,
             HttpServletResponse response)
             throws IOException {
 
-        /*
-         * Message saving is now handled by WebSocket.
-         * This POST is intentionally not used for messages.
-         */
-
         String receiverId =
                 request.getParameter(
                         "receiverId"
                 );
 
-        response.sendRedirect(
-                "messages?receiverId="
-                        + receiverId
-        );
+        String groupId =
+                request.getParameter(
+                        "groupId"
+                );
+
+
+        // Private chat
+        if (receiverId != null &&
+                !receiverId.isEmpty()) {
+
+            response.sendRedirect(
+                    "messages?receiverId=" +
+                    receiverId
+            );
+
+            return;
+        }
+
+
+        // Group chat
+        if (groupId != null &&
+                !groupId.isEmpty()) {
+
+            response.sendRedirect(
+                    "messages?groupId=" +
+                    groupId
+            );
+
+            return;
+        }
+
+
+        response.sendRedirect("messages");
     }
 }

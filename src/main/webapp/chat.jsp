@@ -1,6 +1,8 @@
 <%@ page import="com.connectchat.model.User" %>
 <%@ page import="com.connectchat.model.Message" %>
+<%@ page import="com.connectchat.model.ChatGroup" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.ArrayList" %>
 
 <%
     User currentUser =
@@ -14,489 +16,1215 @@
     List<User> users =
             (List<User>) request.getAttribute("users");
 
+    if (users == null) {
+        users = new ArrayList<>();
+    }
+
     List<Message> messages =
             (List<Message>) request.getAttribute("messages");
+
+    if (messages == null) {
+        messages = new ArrayList<>();
+    }
 
     User receiver =
             (User) request.getAttribute("receiver");
 
+    List<ChatGroup> groups =
+            (List<ChatGroup>) request.getAttribute("groups");
+
+    if (groups == null) {
+        groups = new ArrayList<>();
+    }
+
+    ChatGroup selectedGroup =
+            (ChatGroup) request.getAttribute("selectedGroup");
+
+    /*
+     * MessageServlet now returns List<Message>
+     * for group messages.
+     */
+    List<Message> groupMessages =
+            (List<Message>) request.getAttribute("groupMessages");
+
+    if (groupMessages == null) {
+        groupMessages = new ArrayList<>();
+    }
+
     Integer receiverId =
             (Integer) request.getAttribute("receiverId");
 
-    String contextPath =
-            request.getContextPath();
+    Integer groupId =
+            (Integer) request.getAttribute("groupId");
 
-    String currentProfile =
+    String profilePicture =
             currentUser.getProfilePicture();
 
-    if (currentProfile == null ||
-            currentProfile.trim().isEmpty()) {
+    if (profilePicture == null ||
+            profilePicture.trim().isEmpty()) {
 
-        currentProfile = "default.png";
+        profilePicture = "default.png";
     }
 %>
 
 <!DOCTYPE html>
-<html lang="en">
+
+<html>
 
 <head>
 
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>ConnectChat</title>
+
 
     <style>
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
         }
 
+
         body {
-            background: #eef2f7;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f3f6fb;
+
             height: 100vh;
+
             overflow: hidden;
         }
 
-        .app-container {
+
+        .app {
             width: 100%;
             height: 100vh;
+
             display: flex;
+
+            background: white;
         }
 
-        /* =========================
-           LEFT SIDEBAR
-           ========================= */
+
+        /* =========================================
+           SIDEBAR
+           ========================================= */
 
         .sidebar {
-            width: 340px;
+            width: 365px;
+            min-width: 365px;
+
             height: 100vh;
-            background: #ffffff;
-            border-right: 1px solid #e5e7eb;
+
+            background: white;
+
+            border-right:
+                1px solid #e5e7eb;
+
             display: flex;
+
             flex-direction: column;
         }
 
-        .sidebar-header {
-            height: 75px;
-            padding: 15px 20px;
+
+        /* =========================================
+           LOGO
+           ========================================= */
+
+        .logo-section {
+            height: 78px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
-            border-bottom: 1px solid #eeeeee;
+
+            padding: 0 25px;
+
+            border-bottom:
+                1px solid #e5e7eb;
         }
 
-        .brand {
-            font-size: 23px;
+
+        .logo {
+            font-size: 25px;
+
             font-weight: 700;
+
             color: #2563eb;
         }
 
-        .brand span {
+
+        .logo span {
             color: #111827;
         }
 
-        .profile-small {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
 
-        .profile-small img {
-            width: 42px;
-            height: 42px;
+        .small-profile {
+            width: 45px;
+            height: 45px;
+
             border-radius: 50%;
+
             object-fit: cover;
-            border: 2px solid #2563eb;
+
+            border:
+                2px solid #2563eb;
         }
 
-        .profile-small-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1f2937;
-        }
 
-        /* =========================
-           PROFILE AREA
-           ========================= */
+        /* =========================================
+           PROFILE
+           ========================================= */
 
         .profile-section {
             padding: 20px;
-            background: linear-gradient(
-                135deg,
-                #2563eb,
-                #4f46e5
-            );
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #315bea,
+                    #5145e5
+                );
+
             color: white;
         }
+
 
         .profile-main {
             display: flex;
+
             align-items: center;
-            gap: 14px;
+
+            gap: 15px;
         }
 
-        .profile-main img {
-            width: 65px;
-            height: 65px;
+
+        .profile-image {
+            width: 70px;
+            height: 70px;
+
             border-radius: 50%;
+
             object-fit: cover;
-            border: 3px solid white;
+
+            border:
+                3px solid white;
         }
 
-        .profile-info h3 {
+
+        .profile-details {
+            min-width: 0;
+        }
+
+
+        .profile-name {
             font-size: 17px;
+
+            font-weight: 700;
+
             margin-bottom: 5px;
         }
 
-        .profile-info p {
+
+        .profile-email {
             font-size: 13px;
+
             opacity: 0.9;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
         }
 
-        .change-photo-button {
+
+        .change-photo {
+            display: block;
+
             width: 100%;
+
             margin-top: 15px;
+
             padding: 10px;
-            border: 1px solid rgba(255,255,255,0.4);
+
+            border:
+                1px solid
+                rgba(255,255,255,0.55);
+
             border-radius: 8px;
-            background: rgba(255,255,255,0.15);
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
+
+            text-align: center;
+
             cursor: pointer;
-        }
 
-        .change-photo-button:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        /* =========================
-           SEARCH
-           ========================= */
-
-        .search-box {
-            padding: 15px;
-            border-bottom: 1px solid #eeeeee;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            outline: none;
             font-size: 14px;
+
+            font-weight: 600;
+
+            color: white;
+
+            background:
+                rgba(255,255,255,0.08);
+        }
+
+
+        .change-photo:hover {
+            background:
+                rgba(255,255,255,0.18);
+        }
+
+
+        /* =========================================
+           SEARCH
+           ========================================= */
+
+        .search-section {
+            padding: 16px 15px;
+
+            border-bottom:
+                1px solid #e5e7eb;
+        }
+
+
+        .search-input {
+            width: 100%;
+
+            padding: 12px 14px;
+
+            border:
+                1px solid #d9dee7;
+
+            border-radius: 9px;
+
+            outline: none;
+
+            font-size: 14px;
+
             background: #f8fafc;
         }
 
-        .search-box input:focus {
+
+        .search-input:focus {
             border-color: #2563eb;
+
+            background: white;
         }
 
-        /* =========================
-           USER LIST
-           ========================= */
 
-        .users-title {
-            padding: 15px 20px 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #6b7280;
-            text-transform: uppercase;
-        }
+        /* =========================================
+           SIDEBAR CONTENT
+           ========================================= */
 
-        .users-list {
+        .sidebar-content {
             flex: 1;
+
             overflow-y: auto;
         }
 
-        .user-link {
-            text-decoration: none;
-            color: inherit;
+
+        .section {
+            padding: 17px 15px;
+        }
+
+
+        .section-title {
+            font-size: 12px;
+
+            font-weight: 700;
+
+            color: #6b7280;
+
+            letter-spacing: 0.7px;
+
+            margin-bottom: 10px;
+        }
+
+
+        /* =========================================
+           USERS
+           ========================================= */
+
+        .user-item {
             display: flex;
+
             align-items: center;
+
             gap: 12px;
-            padding: 13px 18px;
-            border-bottom: 1px solid #f1f5f9;
-            cursor: pointer;
-            transition: 0.2s;
+
+            width: 100%;
+
+            padding: 11px;
+
+            margin-bottom: 3px;
+
+            border-radius: 9px;
+
+            text-decoration: none;
+
+            color: #111827;
+
+            transition:
+                background 0.15s;
         }
 
-        .user-link:hover {
-            background: #f1f5f9;
+
+        .user-item:hover {
+            background: #f3f6fb;
         }
 
-        .user-link.active {
-            background: #e8f0ff;
-            border-left: 4px solid #2563eb;
+
+        .user-item.active {
+            background: #eaf1ff;
+
+            border-left:
+                3px solid #2563eb;
         }
 
-        .user-avatar {
+
+        .user-avatar-container {
             position: relative;
+
+            width: 47px;
+            height: 47px;
+
             flex-shrink: 0;
         }
 
-        .user-avatar img {
-            width: 48px;
-            height: 48px;
+
+        .user-avatar {
+            width: 47px;
+            height: 47px;
+
             border-radius: 50%;
+
             object-fit: cover;
-            border: 1px solid #e5e7eb;
         }
 
-        .user-details {
+
+        /* =========================================
+           ONLINE / OFFLINE
+           ========================================= */
+
+        .status-dot {
+            position: absolute;
+
+            right: -1px;
+
+            bottom: 1px;
+
+            width: 11px;
+            height: 11px;
+
+            border-radius: 50%;
+
+            background: #ef4444;
+
+            border:
+                2px solid white;
+        }
+
+
+        .status-dot.online {
+            background: #22c55e;
+        }
+
+
+        .user-info {
             min-width: 0;
+
             flex: 1;
         }
+
 
         .user-name {
             font-size: 15px;
+
             font-weight: 600;
-            color: #111827;
-            margin-bottom: 5px;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
         }
+
 
         .user-status {
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            margin-top: 4px;
+
             font-size: 12px;
-            color: #9ca3af;
+
+            color: #ef4444;
         }
 
-        .online-dot {
+
+        .user-status.online-text {
             color: #22c55e;
-            font-size: 10px;
-            margin-right: 4px;
         }
 
-        .offline-dot {
+
+        .no-users {
+            padding: 15px 5px;
+
             color: #9ca3af;
-            font-size: 10px;
-            margin-right: 4px;
-        }
 
-        /* =========================
-           CHAT AREA
-           ========================= */
-
-        .chat-container {
-            flex: 1;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: #f8fafc;
-        }
-
-        .chat-header {
-            height: 75px;
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            padding: 12px 22px;
-        }
-
-        .chat-header-user {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .chat-header-user img {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #e5e7eb;
-        }
-
-        .chat-header-info h3 {
-            font-size: 16px;
-            color: #111827;
-            margin-bottom: 5px;
-        }
-
-        .chat-status {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-
-        /* =========================
-           EMPTY CHAT
-           ========================= */
-
-        .empty-chat {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             text-align: center;
-            padding: 30px;
+
+            font-size: 13px;
         }
 
-        .empty-chat-content {
-            max-width: 420px;
+
+        /* =========================================
+           GROUPS
+           ========================================= */
+
+        .group-section {
+            padding: 15px;
+
+            border-top:
+                1px solid #e5e7eb;
         }
 
-        .empty-chat-content h2 {
-            color: #1f2937;
-            margin-bottom: 10px;
-            font-size: 25px;
-        }
 
-        .empty-chat-content p {
-            color: #6b7280;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
-        /* =========================
-           MESSAGES
-           ========================= */
-
-        .messages-area {
-            flex: 1;
-            padding: 25px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            display: flex;
+        .create-group-btn {
             width: 100%;
-        }
 
-        .message.sent {
-            justify-content: flex-end;
-        }
+            padding: 10px;
 
-        .message.received {
-            justify-content: flex-start;
-        }
-
-        .message-bubble {
-            max-width: 65%;
-            padding: 11px 15px;
-            border-radius: 14px;
-            font-size: 14px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-
-        .message.sent .message-bubble {
-            background: #2563eb;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.received .message-bubble {
-            background: white;
-            color: #1f2937;
-            border: 1px solid #e5e7eb;
-            border-bottom-left-radius: 4px;
-        }
-
-        /* =========================
-           MESSAGE FORM
-           ========================= */
-
-        .message-form-container {
-            padding: 15px 20px;
-            background: white;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .message-form {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .message-input {
-            flex: 1;
-            padding: 13px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 10px;
-            outline: none;
-            font-size: 14px;
-            background: #f9fafb;
-        }
-
-        .message-input:focus {
-            border-color: #2563eb;
-            background: white;
-        }
-
-        .send-button {
-            padding: 13px 24px;
             border: none;
-            border-radius: 10px;
+
+            border-radius: 8px;
+
             background: #2563eb;
+
             color: white;
+
             font-size: 14px;
+
             font-weight: 600;
+
             cursor: pointer;
+
+            margin-bottom: 10px;
         }
 
-        .send-button:hover {
+
+        .create-group-btn:hover {
             background: #1d4ed8;
         }
 
-        .send-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
+
+        .group-item {
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+            padding: 11px;
+
+            margin-bottom: 3px;
+
+            border-radius: 9px;
+
+            text-decoration: none;
+
+            color: #111827;
         }
 
-        /* =========================
-           SCROLLBAR
-           ========================= */
 
-        ::-webkit-scrollbar {
-            width: 6px;
+        .group-item:hover {
+            background: #f3f6fb;
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
+
+        .group-item.active {
+            background: #eaf1ff;
+
+            border-left:
+                3px solid #2563eb;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+
+        .group-icon {
+            width: 43px;
+            height: 43px;
+
             border-radius: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #e8efff;
+
+            color: #2563eb;
+
+            font-weight: 700;
+
+            font-size: 18px;
+
+            object-fit: cover;
+
+            flex-shrink: 0;
         }
 
-        /* =========================
-           RESPONSIVE
-           ========================= */
+
+        .group-picture {
+            width: 43px;
+            height: 43px;
+
+            border-radius: 10px;
+
+            object-fit: cover;
+
+            flex-shrink: 0;
+        }
+
+
+        .group-info {
+            min-width: 0;
+
+            flex: 1;
+        }
+
+
+        .group-name {
+            font-size: 14px;
+
+            font-weight: 700;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+        }
+
+
+        .group-admin {
+            margin-top: 4px;
+
+            font-size: 11px;
+
+            color: #6b7280;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+        }
+
+
+        .admin-badge {
+            display: inline-block;
+
+            margin-left: 5px;
+
+            padding: 2px 6px;
+
+            border-radius: 4px;
+
+            background: #e0e7ff;
+
+            color: #4338ca;
+
+            font-size: 9px;
+
+            font-weight: 700;
+        }
+
+
+        /* =========================================
+           MAIN CHAT
+           ========================================= */
+
+        .chat-area {
+            flex: 1;
+
+            height: 100vh;
+
+            min-width: 0;
+
+            display: flex;
+
+            flex-direction: column;
+
+            background: #f7f9fc;
+        }
+
+
+        /* =========================================
+           HEADER
+           ========================================= */
+
+        .chat-header {
+            min-height: 78px;
+
+            flex-shrink: 0;
+
+            display: flex;
+
+            align-items: center;
+
+            padding: 0 25px;
+
+            background: white;
+
+            border-bottom:
+                1px solid #e5e7eb;
+        }
+
+
+        .header-avatar {
+            width: 48px;
+            height: 48px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            margin-right: 13px;
+        }
+
+
+        .header-group-picture {
+            width: 48px;
+            height: 48px;
+
+            border-radius: 11px;
+
+            object-fit: cover;
+
+            margin-right: 13px;
+        }
+
+
+        .header-group-icon {
+            width: 48px;
+            height: 48px;
+
+            border-radius: 11px;
+
+            background: #e8efff;
+
+            color: #2563eb;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 19px;
+
+            font-weight: 700;
+
+            margin-right: 13px;
+        }
+
+
+        .header-name {
+            font-size: 17px;
+
+            font-weight: 700;
+
+            color: #111827;
+        }
+
+
+        .header-status {
+            margin-top: 4px;
+
+            font-size: 12px;
+
+            color: #6b7280;
+        }
+
+
+        /* =========================================
+           ADMIN ACTIONS
+           ========================================= */
+
+        .admin-actions {
+            margin-left: auto;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+
+        .add-member-btn,
+        .change-group-picture-btn {
+            padding: 9px 14px;
+
+            border:
+                1px solid #2563eb;
+
+            border-radius: 7px;
+
+            background: white;
+
+            color: #2563eb;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+
+        .add-member-btn:hover,
+        .change-group-picture-btn:hover {
+            background: #eff6ff;
+        }
+
+
+        /* =========================================
+           MESSAGES
+           ========================================= */
+
+        .messages-area {
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 25px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 9px;
+        }
+
+
+        .message-row {
+            display: flex;
+
+            width: 100%;
+        }
+
+
+        .message-row.sent {
+            justify-content: flex-end;
+        }
+
+
+        .message-row.received {
+            justify-content: flex-start;
+        }
+
+
+        .message-bubble {
+            max-width: 65%;
+
+            padding: 11px 14px;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            line-height: 1.45;
+
+            word-wrap: break-word;
+
+            white-space: pre-wrap;
+        }
+
+
+        .message-row.sent
+        .message-bubble {
+            background: #2563eb;
+
+            color: white;
+
+            border-bottom-right-radius: 3px;
+        }
+
+
+        .message-row.received
+        .message-bubble {
+            background: white;
+
+            color: #111827;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-bottom-left-radius: 3px;
+        }
+
+
+        .group-sender {
+            font-size: 11px;
+
+            font-weight: 700;
+
+            color: #2563eb;
+
+            margin-bottom: 4px;
+        }
+
+
+        .empty-chat {
+            flex: 1;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: #9ca3af;
+
+            text-align: center;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================================
+           MESSAGE FORM
+           ========================================= */
+
+        .message-form {
+            display: flex;
+
+            gap: 10px;
+
+            padding: 16px 20px;
+
+            background: white;
+
+            border-top:
+                1px solid #e5e7eb;
+        }
+
+
+        .message-input {
+            flex: 1;
+
+            padding: 13px 15px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 9px;
+
+            outline: none;
+
+            font-size: 14px;
+        }
+
+
+        .message-input:focus {
+            border-color: #2563eb;
+        }
+
+
+        .send-btn {
+            min-width: 90px;
+
+            padding: 0 20px;
+
+            border: none;
+
+            border-radius: 9px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+
+        .send-btn:hover {
+            background: #1d4ed8;
+        }
+
+
+        /* =========================================
+           MODALS
+           ========================================= */
+
+        .modal {
+            display: none;
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 1000;
+
+            background:
+                rgba(15,23,42,0.5);
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+        }
+
+
+        .modal-box {
+            width: 100%;
+
+            max-width: 430px;
+
+            background: white;
+
+            border-radius: 14px;
+
+            padding: 24px;
+
+            box-shadow:
+                0 20px 50px
+                rgba(0,0,0,0.2);
+        }
+
+
+        .modal-title {
+            font-size: 19px;
+
+            font-weight: 700;
+
+            color: #111827;
+
+            margin-bottom: 18px;
+        }
+
+
+        .modal-input {
+            width: 100%;
+
+            padding: 12px;
+
+            border:
+                1px solid #d1d5db;
+
+            border-radius: 8px;
+
+            outline: none;
+
+            font-size: 14px;
+        }
+
+
+        .modal-input:focus {
+            border-color: #2563eb;
+        }
+
+
+        .modal-buttons {
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 9px;
+
+            margin-top: 20px;
+        }
+
+
+        .cancel-btn {
+            padding: 9px 15px;
+
+            border:
+                1px solid #d1d5db;
+
+            background: white;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+        }
+
+
+        .confirm-btn {
+            padding: 9px 15px;
+
+            border: none;
+
+            background: #2563eb;
+
+            color: white;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+        }
+
+
+        .member-list {
+            max-height: 300px;
+
+            overflow-y: auto;
+        }
+
+
+        .member-option {
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 9px;
+
+            border-radius: 7px;
+
+            margin-bottom: 3px;
+        }
+
+
+        .member-option:hover {
+            background: #f3f6fb;
+        }
+
+
+        .member-option img {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+        }
+
+
+        .member-option-info {
+            flex: 1;
+
+            min-width: 0;
+        }
+
+
+        .member-option-name {
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        .member-option-email {
+            font-size: 11px;
+
+            color: #6b7280;
+
+            margin-top: 2px;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+        }
+
+
+        /* =========================================
+           MOBILE
+           ========================================= */
 
         @media (max-width: 800px) {
 
             .sidebar {
-                width: 280px;
+                width: 290px;
+
+                min-width: 290px;
             }
 
             .message-bubble {
                 max-width: 80%;
             }
+
+            .admin-actions {
+                display: none;
+            }
         }
+
 
         @media (max-width: 600px) {
 
             .sidebar {
-                width: 100%;
+                width: 100px;
+
+                min-width: 100px;
             }
 
-            .chat-container {
+            .profile-details,
+            .change-photo,
+            .search-section,
+            .section-title,
+            .user-info,
+            .group-info,
+            .create-group-btn {
                 display: none;
             }
 
-            .sidebar-header {
-                height: 65px;
+            .profile-section {
+                padding: 15px;
+            }
+
+            .profile-main {
+                justify-content: center;
+            }
+
+            .logo-section {
+                justify-content: center;
+            }
+
+            .logo {
+                font-size: 17px;
+            }
+
+            .small-profile {
+                display: none;
+            }
+
+            .user-item,
+            .group-item {
+                justify-content: center;
+            }
+
+            .chat-header {
+                padding: 0 12px;
+            }
+
+            .messages-area {
+                padding: 15px;
             }
         }
 
@@ -504,676 +1232,1206 @@
 
 </head>
 
+
 <body>
 
-<div class="app-container">
 
-    <!-- ==========================================
+<div class="app">
+
+
+    <!-- =================================================
          LEFT SIDEBAR
-         ========================================== -->
+         ================================================= -->
 
     <aside class="sidebar">
 
-        <!-- Header -->
 
-        <div class="sidebar-header">
+        <!-- LOGO -->
 
-            <div class="brand">
+        <div class="logo-section">
+
+            <div class="logo">
                 Connect<span>Chat</span>
             </div>
 
-            <div class="profile-small">
-
-                <img
-                    src="<%= contextPath %>/uploads/profiles/<%= currentProfile %>"
-                    alt="Profile"
-                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
-                >
-
-            </div>
+            <img
+                src="uploads/profiles/<%= profilePicture %>"
+                class="small-profile"
+                alt="Profile"
+            >
 
         </div>
 
 
-        <!-- Current User Profile -->
+        <!-- PROFILE -->
 
         <div class="profile-section">
 
             <div class="profile-main">
 
                 <img
-                    src="<%= contextPath %>/uploads/profiles/<%= currentProfile %>"
+                    src="uploads/profiles/<%= profilePicture %>"
+                    class="profile-image"
                     alt="Profile"
-                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
                 >
 
-                <div class="profile-info">
+                <div class="profile-details">
 
-                    <h3>
+                    <div class="profile-name">
                         <%= currentUser.getUsername() %>
-                    </h3>
+                    </div>
 
-                    <p>
+                    <div class="profile-email">
                         <%= currentUser.getEmail() %>
-                    </p>
+                    </div>
 
                 </div>
 
             </div>
 
 
-            <!-- Profile Picture Form -->
-
             <form
-                id="photoForm"
-                action="<%= contextPath %>/profile"
+                action="profile"
                 method="post"
                 enctype="multipart/form-data"
             >
+
+                <label
+                    for="profilePicture"
+                    class="change-photo"
+                >
+                    Change Photo
+                </label>
 
                 <input
                     type="file"
                     id="profilePicture"
                     name="profilePicture"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    style="display:none"
-                    onchange="document.getElementById('photoForm').submit();"
+                    accept="image/*"
+                    onchange="this.form.submit()"
+                    style="display:none;"
                 >
-
-                <button
-                    type="button"
-                    class="change-photo-button"
-                    onclick="document.getElementById('profilePicture').click();"
-                >
-                    Change Photo
-                </button>
 
             </form>
 
         </div>
 
 
-        <!-- Search -->
+        <!-- SEARCH -->
 
-        <div class="search-box">
+        <div class="search-section">
 
             <input
                 type="text"
                 id="searchUsers"
+                class="search-input"
                 placeholder="Search users..."
-                autocomplete="off"
+                onkeyup="searchUsers()"
             >
 
         </div>
 
 
-        <div class="users-title">
-            Users
-        </div>
+        <!-- SIDEBAR CONTENT -->
+
+        <div class="sidebar-content">
 
 
-        <!-- User List -->
+            <!-- AVAILABLE USERS -->
 
-        <div class="users-list" id="usersList">
+            <div class="section">
 
-            <%
-                if (users != null && !users.isEmpty()) {
+                <div class="section-title">
+                    AVAILABLE USERS
+                </div>
 
-                    for (User chatUser : users) {
 
-                        boolean active =
-                                receiverId != null &&
-                                receiverId == chatUser.getId();
+                <div id="usersList">
 
-                        String profile =
-                                chatUser.getProfilePicture();
+                    <%
+                        if (users.isEmpty()) {
+                    %>
 
-                        if (profile == null ||
-                                profile.trim().isEmpty()) {
+                        <div class="no-users">
+                            No other users available
+                        </div>
 
-                            profile = "default.png";
-                        }
-            %>
+                    <%
+                        } else {
 
-            <a
-                href="<%= contextPath %>/messages?receiverId=<%= chatUser.getId() %>"
-                class="user-link <%= active ? "active" : "" %>"
-                data-user-id="<%= chatUser.getId() %>"
-            >
+                            for (User user : users) {
 
-                <div class="user-avatar">
+                                String userPicture =
+                                        user.getProfilePicture();
 
-                    <img
-                        src="<%= contextPath %>/uploads/profiles/<%= profile %>"
-                        alt="Profile"
-                        onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                                if (userPicture == null ||
+                                        userPicture.trim().isEmpty()) {
+
+                                    userPicture =
+                                            "default.png";
+                                }
+
+                                boolean activeUser =
+                                        receiverId != null &&
+                                        receiverId ==
+                                            user.getId();
+                    %>
+
+
+                    <a
+                        href="messages?receiverId=<%= user.getId() %>"
+                        class="user-item <%= activeUser ? "active" : "" %>"
+                        data-user-id="<%= user.getId() %>"
+                        data-username="<%= user.getUsername().toLowerCase() %>"
                     >
 
+                        <div class="user-avatar-container">
+
+                            <img
+                                src="uploads/profiles/<%= userPicture %>"
+                                class="user-avatar"
+                                alt="Profile"
+                            >
+
+                            <span
+                                class="status-dot"
+                                id="status-dot-<%= user.getId() %>"
+                            ></span>
+
+                        </div>
+
+
+                        <div class="user-info">
+
+                            <div class="user-name">
+                                <%= user.getUsername() %>
+                            </div>
+
+                            <div
+                                class="user-status"
+                                id="user-status-<%= user.getId() %>"
+                            >
+                                Offline
+                            </div>
+
+                        </div>
+
+                    </a>
+
+
+                    <%
+                            }
+                        }
+                    %>
+
                 </div>
 
-
-                <div class="user-details">
-
-                    <div class="user-name">
-                        <%= chatUser.getUsername() %>
-                    </div>
-
-                    <div class="user-status">
-
-                        <span class="offline-dot">
-                            ●
-                        </span>
-
-                        Offline
-
-                    </div>
-
-                </div>
-
-            </a>
-
-            <%
-                    }
-
-                } else {
-            %>
-
-            <div style="
-                padding:30px 20px;
-                text-align:center;
-                color:#9ca3af;
-                font-size:14px;
-            ">
-                No other users found.
             </div>
 
-            <%
-                }
-            %>
+
+            <!-- GROUP CHATS -->
+
+            <div class="group-section">
+
+                <div class="section-title">
+                    GROUP CHATS
+                </div>
+
+
+                <button
+                    type="button"
+                    class="create-group-btn"
+                    onclick="openCreateGroupModal()"
+                >
+                    Create Group
+                </button>
+
+
+                <div>
+
+                    <%
+                        if (groups.isEmpty()) {
+                    %>
+
+                        <div class="no-users">
+                            No groups yet
+                        </div>
+
+                    <%
+                        } else {
+
+                            for (ChatGroup group : groups) {
+
+                                boolean activeGroup =
+                                        groupId != null &&
+                                        groupId ==
+                                            group.getId();
+
+                                String groupPicture =
+                                        group.getGroupPicture();
+
+                                if (groupPicture == null ||
+                                        groupPicture.trim().isEmpty()) {
+
+                                    groupPicture =
+                                            "group-default.png";
+                                }
+                    %>
+
+
+                    <a
+                        href="messages?groupId=<%= group.getId() %>"
+                        class="group-item <%= activeGroup ? "active" : "" %>"
+                    >
+
+                        <img
+                            src="uploads/groups/<%= groupPicture %>"
+                            class="group-picture"
+                            alt="Group"
+                        >
+
+
+                        <div class="group-info">
+
+                            <div class="group-name">
+                                <%= group.getGroupName() %>
+                            </div>
+
+                            <div class="group-admin">
+
+                                Admin:
+                                <%= group.getCreatorName() %>
+
+                                <%
+                                    if (group.isAdmin()) {
+                                %>
+
+                                    <span class="admin-badge">
+                                        ADMIN
+                                    </span>
+
+                                <%
+                                    }
+                                %>
+
+                            </div>
+
+                        </div>
+
+                    </a>
+
+
+                    <%
+                            }
+                        }
+                    %>
+
+                </div>
+
+            </div>
+
 
         </div>
 
     </aside>
 
 
-    <!-- ==========================================
-         CHAT AREA
-         ========================================== -->
+    <!-- =================================================
+         MAIN CHAT AREA
+         ================================================= -->
 
-    <main class="chat-container">
-
-
-        <%
-            if (receiver != null) {
-
-                String receiverProfile =
-                        receiver.getProfilePicture();
-
-                if (receiverProfile == null ||
-                        receiverProfile.trim().isEmpty()) {
-
-                    receiverProfile = "default.png";
-                }
-        %>
+    <main class="chat-area">
 
 
-        <!-- Chat Header -->
+        <!-- CHAT HEADER -->
 
-        <header class="chat-header">
+        <div class="chat-header">
 
-            <div class="chat-header-user">
+
+            <%
+                if (selectedGroup != null) {
+
+                    String selectedGroupPicture =
+                            selectedGroup.getGroupPicture();
+
+                    if (selectedGroupPicture == null ||
+                            selectedGroupPicture.trim().isEmpty()) {
+
+                        selectedGroupPicture =
+                                "group-default.png";
+                    }
+            %>
+
 
                 <img
-                    src="<%= contextPath %>/uploads/profiles/<%= receiverProfile %>"
-                    alt="Profile"
-                    onerror="this.src='<%= contextPath %>/uploads/profiles/default.png'"
+                    src="uploads/groups/<%= selectedGroupPicture %>"
+                    class="header-group-picture"
+                    alt="Group"
                 >
 
-                <div class="chat-header-info">
 
-                    <h3>
-                        <%= receiver.getUsername() %>
-                    </h3>
+                <div>
 
-                    <div
-                        class="chat-status"
-                        id="chatStatus"
-                    >
+                    <div class="header-name">
+                        <%= selectedGroup.getGroupName() %>
+                    </div>
 
-                        <span class="offline-dot">
-                            ●
-                        </span>
+                    <div class="header-status">
 
-                        Offline
+                        Created by
+                        <%= selectedGroup.getCreatorName() %>
+
+                        <%
+                            if (selectedGroup.isAdmin()) {
+                        %>
+
+                            · You are Admin
+
+                        <%
+                            }
+                        %>
 
                     </div>
 
                 </div>
 
-            </div>
 
-        </header>
+                <%
+                    if (selectedGroup.isAdmin()) {
+                %>
+
+                    <div class="admin-actions">
+
+                        <!-- CHANGE GROUP PICTURE -->
+
+                        <form
+                            action="group-profile"
+                            method="post"
+                            enctype="multipart/form-data"
+                        >
+
+                            <input
+                                type="hidden"
+                                name="groupId"
+                                value="<%= selectedGroup.getId() %>"
+                            >
+
+                            <label
+                                for="groupPictureInput"
+                                class="change-group-picture-btn"
+                            >
+                                Change Picture
+                            </label>
+
+                            <input
+                                type="file"
+                                id="groupPictureInput"
+                                name="groupPicture"
+                                accept="image/*"
+                                onchange="this.form.submit()"
+                                style="display:none;"
+                            >
+
+                        </form>
 
 
-        <!-- Messages -->
+                        <!-- ADD MEMBERS -->
+
+                        <button
+                            type="button"
+                            class="add-member-btn"
+                            onclick="openMemberModal()"
+                        >
+                            Add Members
+                        </button>
+
+                    </div>
+
+                <%
+                    }
+                %>
+
+
+            <%
+                } else if (receiver != null) {
+            %>
+
+
+                <%
+                    String receiverPicture =
+                            receiver.getProfilePicture();
+
+                    if (receiverPicture == null ||
+                            receiverPicture.trim().isEmpty()) {
+
+                        receiverPicture =
+                                "default.png";
+                    }
+                %>
+
+
+                <img
+                    src="uploads/profiles/<%= receiverPicture %>"
+                    class="header-avatar"
+                    alt="Profile"
+                >
+
+
+                <div>
+
+                    <div class="header-name">
+                        <%= receiver.getUsername() %>
+                    </div>
+
+                    <div
+                        class="header-status"
+                        id="header-user-status"
+                    >
+                        Offline
+                    </div>
+
+                </div>
+
+
+            <%
+                } else {
+            %>
+
+
+                <div>
+
+                    <div class="header-name">
+                        Welcome to ConnectChat
+                    </div>
+
+                    <div class="header-status">
+                        Select a user or group to start chatting
+                    </div>
+
+                </div>
+
+
+            <%
+                }
+            %>
+
+        </div>
+
+
+        <!-- =================================================
+             MESSAGES AREA
+             ================================================= -->
 
         <div
             class="messages-area"
             id="messagesArea"
         >
 
+
             <%
-                if (messages != null &&
-                        !messages.isEmpty()) {
+                if (selectedGroup != null) {
 
-                    for (Message message : messages) {
-
-                        boolean sent =
-                                message.getSenderId()
-                                == currentUser.getId();
+                    if (groupMessages.isEmpty()) {
             %>
 
-            <div
-                class="message <%= sent ? "sent" : "received" %>"
-            >
-
-                <div class="message-bubble">
-
-                    <%= message.getMessage() %>
-
-                </div>
-
-            </div>
+                        <div class="empty-chat">
+                            No messages in this group yet.
+                        </div>
 
             <%
+                    } else {
+
+                        for (Message groupMessage :
+                                groupMessages) {
+
+                            int senderId =
+                                    groupMessage.getSenderId();
+
+                            String text =
+                                    groupMessage.getMessage();
+
+                            boolean sent =
+                                    senderId ==
+                                    currentUser.getId();
+            %>
+
+
+                    <div
+                        class="message-row <%= sent ? "sent" : "received" %>"
+                    >
+
+                        <div class="message-bubble">
+
+                            <%
+                                if (!sent) {
+                            %>
+
+                                <div class="group-sender">
+                                    Member
+                                </div>
+
+                            <%
+                                }
+                            %>
+
+                            <%= text %>
+
+                        </div>
+
+                    </div>
+
+
+            <%
+                        }
+                    }
+
+                } else if (receiver != null) {
+
+                    if (messages.isEmpty()) {
+            %>
+
+                        <div class="empty-chat">
+                            No messages yet. Start the conversation.
+                        </div>
+
+            <%
+                    } else {
+
+                        for (Message message :
+                                messages) {
+
+                            boolean sent =
+                                    message.getSenderId() ==
+                                    currentUser.getId();
+            %>
+
+
+                    <div
+                        class="message-row <%= sent ? "sent" : "received" %>"
+                    >
+
+                        <div class="message-bubble">
+
+                            <%= message.getMessage() %>
+
+                        </div>
+
+                    </div>
+
+
+            <%
+                        }
                     }
 
                 } else {
             %>
 
-            <div
-                id="emptyConversation"
-                style="
-                    text-align:center;
-                    color:#9ca3af;
-                    font-size:14px;
-                    margin:auto;
-                "
-            >
-                No messages yet. Start the conversation.
-            </div>
+
+                    <div class="empty-chat">
+
+                        Select a user or group from the left
+                        to start chatting.
+
+                    </div>
+
 
             <%
                 }
             %>
 
-        </div>
-
-
-        <!-- Message Input -->
-
-        <div class="message-form-container">
-
-            <div class="message-form">
-
-                <input
-                    type="text"
-                    id="messageInput"
-                    class="message-input"
-                    placeholder="Type a message..."
-                    autocomplete="off"
-                >
-
-                <button
-                    type="button"
-                    id="sendButton"
-                    class="send-button"
-                    onclick="sendMessage()"
-                >
-                    Send
-                </button>
-
-            </div>
 
         </div>
 
+
+        <!-- =================================================
+             MESSAGE FORM
+             ================================================= -->
 
         <%
-            } else {
+            if (receiver != null ||
+                    selectedGroup != null) {
         %>
 
 
-        <!-- No Chat Selected -->
+        <form
+            class="message-form"
+            id="messageForm"
+        >
 
-        <div class="empty-chat">
+            <input
+                type="text"
+                id="messageInput"
+                class="message-input"
+                placeholder="Type a message..."
+                autocomplete="off"
+            >
 
-            <div class="empty-chat-content">
+            <button
+                type="submit"
+                class="send-btn"
+            >
+                Send
+            </button>
 
-                <h2>
-                    Welcome to ConnectChat
-                </h2>
-
-                <p>
-                    Select a user from the left side
-                    to start a conversation.
-                </p>
-
-            </div>
-
-        </div>
+        </form>
 
 
         <%
             }
         %>
 
+
     </main>
 
 </div>
 
 
+<!-- =====================================================
+     CREATE GROUP MODAL
+     ===================================================== -->
+
+<div
+    class="modal"
+    id="createGroupModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            Create New Group
+        </div>
+
+
+        <form
+            action="groups"
+            method="post"
+        >
+
+            <input
+                type="hidden"
+                name="action"
+                value="create"
+            >
+
+
+            <input
+                type="text"
+                name="groupName"
+                class="modal-input"
+                placeholder="Enter group name"
+                maxlength="100"
+                required
+            >
+
+
+            <div class="modal-buttons">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    onclick="closeCreateGroupModal()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="confirm-btn"
+                >
+                    Create Group
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADD MEMBER MODAL
+     ===================================================== -->
+
+<%
+    if (selectedGroup != null &&
+            selectedGroup.isAdmin()) {
+%>
+
+<div
+    class="modal"
+    id="memberModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-title">
+            Add Members
+        </div>
+
+
+        <div class="member-list">
+
+            <%
+                if (users.isEmpty()) {
+            %>
+
+                <div class="no-users">
+                    No users available.
+                </div>
+
+            <%
+                } else {
+
+                    for (User user :
+                            users) {
+
+                        String memberPicture =
+                                user.getProfilePicture();
+
+                        if (memberPicture == null ||
+                                memberPicture.trim().isEmpty()) {
+
+                            memberPicture =
+                                    "default.png";
+                        }
+            %>
+
+
+                <form
+                    action="group-members"
+                    method="post"
+                    class="member-option"
+                >
+
+                    <input
+                        type="hidden"
+                        name="groupId"
+                        value="<%= selectedGroup.getId() %>"
+                    >
+
+                    <input
+                        type="hidden"
+                        name="userId"
+                        value="<%= user.getId() %>"
+                    >
+
+
+                    <img
+                        src="uploads/profiles/<%= memberPicture %>"
+                        alt="Profile"
+                    >
+
+
+                    <div class="member-option-info">
+
+                        <div class="member-option-name">
+                            <%= user.getUsername() %>
+                        </div>
+
+                        <div class="member-option-email">
+                            <%= user.getEmail() %>
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="confirm-btn"
+                    >
+                        Add
+                    </button>
+
+                </form>
+
+
+            <%
+                    }
+                }
+            %>
+
+        </div>
+
+
+        <div class="modal-buttons">
+
+            <button
+                type="button"
+                class="cancel-btn"
+                onclick="closeMemberModal()"
+            >
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<%
+    }
+%>
+
+
 <script>
 
-    /* ==========================================
-       USER INFORMATION
-       ========================================== */
+
+    /* =====================================================
+       CURRENT USER
+       ===================================================== */
 
     const currentUserId =
         <%= currentUser.getId() %>;
 
-    const receiverId =
+
+    /* =====================================================
+       CURRENT PRIVATE CHAT USER
+       ===================================================== */
+
+    const currentReceiverId =
         <%= receiverId != null
                 ? receiverId
                 : "null" %>;
 
-    const contextPath =
-        "<%= contextPath %>";
+
+    /* =====================================================
+       CURRENT GROUP
+       ===================================================== */
+
+    const currentGroupId =
+        <%= groupId != null
+                ? groupId
+                : "null" %>;
 
 
-    /* ==========================================
+    /* =====================================================
        WEBSOCKET
-       ========================================== */
+       ===================================================== */
 
     let socket = null;
-
-    let reconnectTimer = null;
 
 
     function connectWebSocket() {
 
-        if (socket !== null &&
-            socket.readyState === WebSocket.OPEN) {
-
-            return;
-        }
-
-
         const protocol =
             window.location.protocol === "https:"
-                ? "wss://"
-                : "ws://";
+                ? "wss:"
+                : "ws:";
+
+
+        const host =
+            window.location.host;
+
+
+        const contextPath =
+            "<%= request.getContextPath() %>";
 
 
         const socketUrl =
             protocol +
-            window.location.host +
+            "//" +
+            host +
             contextPath +
             "/chat?userId=" +
             currentUserId;
-
-
-        console.log(
-            "Connecting WebSocket:",
-            socketUrl
-        );
 
 
         socket =
             new WebSocket(socketUrl);
 
 
-        socket.onopen =
-            function () {
+        socket.onopen = function() {
 
-                console.log(
-                    "WebSocket connected"
-                );
+            console.log(
+                "ConnectChat WebSocket connected"
+            );
 
-                const sendButton =
-                    document.getElementById(
-                        "sendButton"
-                    );
-
-                if (sendButton) {
-
-                    sendButton.disabled = false;
-
-                }
-
-            };
+        };
 
 
-        socket.onmessage =
-            function (event) {
+        socket.onmessage = function(event) {
 
-                const data =
-                    event.data;
+            handleWebSocketMessage(
+                event.data
+            );
 
-
-                console.log(
-                    "WebSocket message:",
-                    data
-                );
+        };
 
 
-                /* Online users */
+        socket.onclose = function() {
 
-                if (
-                    data.startsWith("ONLINE|")
-                ) {
+            console.log(
+                "WebSocket disconnected"
+            );
 
-                    const onlineIds =
-                        data.substring(7);
-
-                    updateOnlineUsers(
-                        onlineIds
-                    );
-
-                    return;
-                }
+        };
 
 
-                /* Chat message */
+        socket.onerror = function(error) {
 
-                if (
-                    data.startsWith("MESSAGE|")
-                ) {
+            console.log(
+                "WebSocket error",
+                error
+            );
 
-                    displayIncomingMessage(
-                        data
-                    );
-
-                    return;
-                }
-
-            };
-
-
-        socket.onclose =
-            function () {
-
-                console.log(
-                    "WebSocket disconnected"
-                );
-
-
-                const sendButton =
-                    document.getElementById(
-                        "sendButton"
-                    );
-
-                if (sendButton) {
-
-                    sendButton.disabled = true;
-
-                }
-
-
-                clearTimeout(
-                    reconnectTimer
-                );
-
-
-                reconnectTimer =
-                    setTimeout(
-                        connectWebSocket,
-                        3000
-                    );
-
-            };
-
-
-        socket.onerror =
-            function (error) {
-
-                console.error(
-                    "WebSocket error:",
-                    error
-                );
-
-            };
+        };
 
     }
 
 
-    /* ==========================================
-       SEND MESSAGE
-       ========================================== */
+    /* =====================================================
+       HANDLE WEBSOCKET MESSAGE
+       ===================================================== */
 
-    function sendMessage() {
-
-        const input =
-            document.getElementById(
-                "messageInput"
-            );
+    function handleWebSocketMessage(data) {
 
 
-        if (!input) {
-            return;
-        }
+        /* ================================================
+           ONLINE STATUS
+           ================================================ */
 
+        if (data.startsWith("ONLINE|")) {
 
-        const message =
-            input.value.trim();
-
-
-        if (message === "") {
-
-            return;
-
-        }
-
-
-        if (receiverId === null) {
-
-            return;
-
-        }
-
-
-        if (
-            socket === null ||
-            socket.readyState !== WebSocket.OPEN
-        ) {
-
-            alert(
-                "Chat connection is not ready. Please wait."
+            updateOnlineStatus(
+                data.substring(7)
             );
 
             return;
-
         }
 
 
-        const data =
-            "PRIVATE|" +
-            currentUserId +
-            "|" +
-            receiverId +
-            "|" +
-            message;
+        /* ================================================
+           PRIVATE MESSAGE
+           ================================================ */
+
+        if (data.startsWith("MESSAGE|")) {
+
+            const parts =
+                data.split("|");
 
 
-        socket.send(data);
+            if (parts.length < 4) {
+                return;
+            }
 
 
-        input.value = "";
+            const senderId =
+                parseInt(parts[1]);
 
-        input.focus();
+
+            const receiverId =
+                parseInt(parts[2]);
+
+
+            const text =
+                parts.slice(3).join("|");
+
+
+            if (
+                currentReceiverId !== null &&
+                (
+                    (
+                        senderId === currentUserId &&
+                        receiverId === currentReceiverId
+                    )
+                    ||
+                    (
+                        senderId === currentReceiverId &&
+                        receiverId === currentUserId
+                    )
+                )
+            ) {
+
+                addPrivateMessage(
+                    senderId,
+                    text
+                );
+
+            }
+
+            return;
+        }
+
+
+        /* ================================================
+           GROUP MESSAGE
+           ================================================ */
+
+        if (data.startsWith("GROUP_MESSAGE|")) {
+
+            const parts =
+                data.split("|");
+
+
+            if (parts.length < 4) {
+                return;
+            }
+
+
+            const senderId =
+                parseInt(parts[1]);
+
+
+            const groupId =
+                parseInt(parts[2]);
+
+
+            const text =
+                parts.slice(3).join("|");
+
+
+            if (
+                currentGroupId !== null &&
+                groupId === currentGroupId
+            ) {
+
+                addGroupMessage(
+                    senderId,
+                    text
+                );
+
+            }
+
+            return;
+        }
 
     }
 
 
-    /* ==========================================
-       DISPLAY RECEIVED MESSAGE
-       ========================================== */
+    /* =====================================================
+       UPDATE ONLINE STATUS
+       ===================================================== */
 
-    function displayIncomingMessage(data) {
+    function updateOnlineStatus(
+        onlineUsersString
+    ) {
 
-        const parts =
-            data.split("|");
+        const onlineUsers =
+            onlineUsersString
+                .split(",")
+                .filter(
+                    value =>
+                        value.trim() !== ""
+                );
 
 
-        if (parts.length < 4) {
+        document
+            .querySelectorAll(
+                ".user-item"
+            )
+            .forEach(function(item) {
 
-            return;
+                const userId =
+                    item.getAttribute(
+                        "data-user-id"
+                    );
+
+
+                const dot =
+                    document.getElementById(
+                        "status-dot-" +
+                        userId
+                    );
+
+
+                const status =
+                    document.getElementById(
+                        "user-status-" +
+                        userId
+                    );
+
+
+                if (!dot || !status) {
+                    return;
+                }
+
+
+                if (
+                    onlineUsers.includes(
+                        userId
+                    )
+                ) {
+
+                    dot.classList.add(
+                        "online"
+                    );
+
+                    status.textContent =
+                        "Online";
+
+                    status.classList.add(
+                        "online-text"
+                    );
+
+                } else {
+
+                    dot.classList.remove(
+                        "online"
+                    );
+
+                    status.textContent =
+                        "Offline";
+
+                    status.classList.remove(
+                        "online-text"
+                    );
+
+                }
+
+            });
+
+
+        /* ================================================
+           HEADER ONLINE STATUS
+           ================================================ */
+
+        if (currentReceiverId !== null) {
+
+            const headerStatus =
+                document.getElementById(
+                    "header-user-status"
+                );
+
+
+            if (headerStatus) {
+
+                const receiverIsOnline =
+                    onlineUsers.includes(
+                        String(
+                            currentReceiverId
+                        )
+                    );
+
+
+                headerStatus.textContent =
+                    receiverIsOnline
+                        ? "Online"
+                        : "Offline";
+
+
+                headerStatus.style.color =
+                    receiverIsOnline
+                        ? "#22c55e"
+                        : "#ef4444";
+
+            }
 
         }
 
-
-        const senderId =
-            parseInt(parts[1]);
+    }
 
 
-        const receivedReceiverId =
-            parseInt(parts[2]);
+    /* =====================================================
+       ADD PRIVATE MESSAGE
+       ===================================================== */
 
-
-        const message =
-            parts.slice(3).join("|");
-
-
-        /*
-         * Only display messages belonging
-         * to the currently opened conversation.
-         */
-
-        if (receiverId === null) {
-
-            return;
-
-        }
-
-
-        if (
-            senderId !== currentUserId &&
-            senderId !== receiverId
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            receivedReceiverId !== currentUserId &&
-            receivedReceiverId !== receiverId
-        ) {
-
-            return;
-
-        }
-
+    function addPrivateMessage(
+        senderId,
+        text
+    ) {
 
         const messagesArea =
             document.getElementById(
@@ -1181,45 +2439,30 @@
             );
 
 
-        if (!messagesArea) {
-
-            return;
-
-        }
-
-
-        /* Remove "No messages yet" */
-
-        const emptyConversation =
-            document.getElementById(
-                "emptyConversation"
+        const emptyMessage =
+            messagesArea.querySelector(
+                ".empty-chat"
             );
 
 
-        if (emptyConversation) {
-
-            emptyConversation.remove();
-
+        if (emptyMessage) {
+            emptyMessage.remove();
         }
 
 
-        const messageDiv =
+        const row =
             document.createElement(
                 "div"
             );
 
 
-        if (senderId === currentUserId) {
-
-            messageDiv.className =
-                "message sent";
-
-        } else {
-
-            messageDiv.className =
-                "message received";
-
-        }
+        row.className =
+            "message-row " +
+            (
+                senderId === currentUserId
+                    ? "sent"
+                    : "received"
+            );
 
 
         const bubble =
@@ -1232,22 +2475,17 @@
             "message-bubble";
 
 
-        /*
-         * textContent is used instead of
-         * innerHTML for message safety.
-         */
-
         bubble.textContent =
-            message;
+            text;
 
 
-        messageDiv.appendChild(
+        row.appendChild(
             bubble
         );
 
 
         messagesArea.appendChild(
-            messageDiv
+            row
         );
 
 
@@ -1256,172 +2494,197 @@
     }
 
 
-    /* ==========================================
-       ONLINE / OFFLINE USERS
-       ========================================== */
+    /* =====================================================
+       ADD GROUP MESSAGE
+       ===================================================== */
 
-    function updateOnlineUsers(
-        userIds
+    function addGroupMessage(
+        senderId,
+        text
     ) {
 
-        const onlineIds =
-            userIds
-                .split(",")
-                .filter(
-                    function(id) {
-                        return id !== "";
-                    }
-                )
-                .map(
-                    function(id) {
-                        return parseInt(id);
-                    }
-                );
-
-
-        /*
-         * Update users in sidebar
-         */
-
-        document
-            .querySelectorAll(".user-link")
-            .forEach(
-                function(userElement) {
-
-                    const userId =
-                        parseInt(
-                            userElement.dataset.userId
-                        );
-
-
-                    const statusElement =
-                        userElement.querySelector(
-                            ".user-status"
-                        );
-
-
-                    if (!statusElement) {
-
-                        return;
-
-                    }
-
-
-                    if (
-                        onlineIds.includes(
-                            userId
-                        )
-                    ) {
-
-                        statusElement.innerHTML =
-                            '<span class="online-dot">●</span> Online';
-
-                    } else {
-
-                        statusElement.innerHTML =
-                            '<span class="offline-dot">●</span> Offline';
-
-                    }
-
-                }
+        const messagesArea =
+            document.getElementById(
+                "messagesArea"
             );
 
 
-        /*
-         * Update selected user's status
-         */
+        const emptyMessage =
+            messagesArea.querySelector(
+                ".empty-chat"
+            );
 
-        if (receiverId !== null) {
 
-            const headerStatus =
-                document.getElementById(
-                    "chatStatus"
+        if (emptyMessage) {
+            emptyMessage.remove();
+        }
+
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+
+        row.className =
+            "message-row " +
+            (
+                senderId === currentUserId
+                    ? "sent"
+                    : "received"
+            );
+
+
+        const bubble =
+            document.createElement(
+                "div"
+            );
+
+
+        bubble.className =
+            "message-bubble";
+
+
+        if (senderId !== currentUserId) {
+
+            const sender =
+                document.createElement(
+                    "div"
                 );
 
 
-            if (headerStatus) {
+            sender.className =
+                "group-sender";
 
-                if (
-                    onlineIds.includes(
-                        receiverId
-                    )
-                ) {
 
-                    headerStatus.innerHTML =
-                        '<span class="online-dot">●</span> Online';
+            sender.textContent =
+                "Member";
 
-                } else {
 
-                    headerStatus.innerHTML =
-                        '<span class="offline-dot">●</span> Offline';
-
-                }
-
-            }
+            bubble.appendChild(
+                sender
+            );
 
         }
 
-    }
+
+        const messageText =
+            document.createElement(
+                "span"
+            );
 
 
-    /* ==========================================
-       SEARCH USERS
-       ========================================== */
+        messageText.textContent =
+            text;
 
-    const searchInput =
-        document.getElementById(
-            "searchUsers"
+
+        bubble.appendChild(
+            messageText
         );
 
 
-    if (searchInput) {
-
-        searchInput.addEventListener(
-            "input",
-            function() {
-
-                const searchText =
-                    this.value
-                        .toLowerCase()
-                        .trim();
+        row.appendChild(
+            bubble
+        );
 
 
-                const userLinks =
-                    document.querySelectorAll(
-                        ".user-link"
+        messagesArea.appendChild(
+            row
+        );
+
+
+        scrollToBottom();
+
+    }
+
+
+    /* =====================================================
+       SEND MESSAGE
+       ===================================================== */
+
+    const messageForm =
+        document.getElementById(
+            "messageForm"
+        );
+
+
+    if (messageForm) {
+
+        messageForm.addEventListener(
+            "submit",
+            function(event) {
+
+                event.preventDefault();
+
+
+                const input =
+                    document.getElementById(
+                        "messageInput"
                     );
 
 
-                userLinks.forEach(
-                    function(userLink) {
-
-                        const name =
-                            userLink
-                                .querySelector(
-                                    ".user-name"
-                                )
-                                .textContent
-                                .toLowerCase();
+                const text =
+                    input.value.trim();
 
 
-                        if (
-                            name.includes(
-                                searchText
-                            )
-                        ) {
+                if (text === "") {
+                    return;
+                }
 
-                            userLink.style.display =
-                                "flex";
 
-                        } else {
+                if (
+                    socket === null ||
+                    socket.readyState !==
+                        WebSocket.OPEN
+                ) {
 
-                            userLink.style.display =
-                                "none";
+                    alert(
+                        "Chat connection is not ready."
+                    );
 
-                        }
+                    return;
+                }
 
-                    }
-                );
+
+                /* ========================================
+                   GROUP MESSAGE
+                   ======================================== */
+
+                if (currentGroupId !== null) {
+
+                    socket.send(
+                        "GROUP|" +
+                        currentUserId +
+                        "|" +
+                        currentGroupId +
+                        "|" +
+                        text
+                    );
+
+
+                /* ========================================
+                   PRIVATE MESSAGE
+                   ======================================== */
+
+                } else if (
+                    currentReceiverId !== null
+                ) {
+
+                    socket.send(
+                        "PRIVATE|" +
+                        currentUserId +
+                        "|" +
+                        currentReceiverId +
+                        "|" +
+                        text
+                    );
+
+                }
+
+
+                input.value = "";
+
+                input.focus();
 
             }
         );
@@ -1429,9 +2692,9 @@
     }
 
 
-    /* ==========================================
-       ENTER TO SEND
-       ========================================== */
+    /* =====================================================
+       ENTER KEY
+       ===================================================== */
 
     const messageInput =
         document.getElementById(
@@ -1452,7 +2715,13 @@
 
                     event.preventDefault();
 
-                    sendMessage();
+                    if (messageForm) {
+
+                        messageForm.dispatchEvent(
+                            new Event("submit")
+                        );
+
+                    }
 
                 }
 
@@ -1462,9 +2731,184 @@
     }
 
 
-    /* ==========================================
+    /* =====================================================
+       SEARCH USERS
+       ===================================================== */
+
+    function searchUsers() {
+
+        const searchInput =
+            document.getElementById(
+                "searchUsers"
+            );
+
+
+        const searchText =
+            searchInput.value
+                .toLowerCase()
+                .trim();
+
+
+        document
+            .querySelectorAll(
+                ".user-item"
+            )
+            .forEach(function(item) {
+
+                const username =
+                    item.getAttribute(
+                        "data-username"
+                    );
+
+
+                if (
+                    username.includes(
+                        searchText
+                    )
+                ) {
+
+                    item.style.display =
+                        "flex";
+
+                } else {
+
+                    item.style.display =
+                        "none";
+
+                }
+
+            });
+
+    }
+
+
+    /* =====================================================
+       CREATE GROUP MODAL
+       ===================================================== */
+
+    function openCreateGroupModal() {
+
+        const modal =
+            document.getElementById(
+                "createGroupModal"
+            );
+
+
+        if (modal) {
+
+            modal.style.display =
+                "flex";
+
+        }
+
+    }
+
+
+    function closeCreateGroupModal() {
+
+        const modal =
+            document.getElementById(
+                "createGroupModal"
+            );
+
+
+        if (modal) {
+
+            modal.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       MEMBER MODAL
+       ===================================================== */
+
+    function openMemberModal() {
+
+        const modal =
+            document.getElementById(
+                "memberModal"
+            );
+
+
+        if (modal) {
+
+            modal.style.display =
+                "flex";
+
+        }
+
+    }
+
+
+    function closeMemberModal() {
+
+        const modal =
+            document.getElementById(
+                "memberModal"
+            );
+
+
+        if (modal) {
+
+            modal.style.display =
+                "none";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       CLOSE MODAL OUTSIDE
+       ===================================================== */
+
+    window.addEventListener(
+        "click",
+        function(event) {
+
+            const createModal =
+                document.getElementById(
+                    "createGroupModal"
+                );
+
+
+            if (
+                event.target ===
+                createModal
+            ) {
+
+                closeCreateGroupModal();
+
+            }
+
+
+            const memberModal =
+                document.getElementById(
+                    "memberModal"
+                );
+
+
+            if (
+                memberModal &&
+                event.target ===
+                    memberModal
+            ) {
+
+                closeMemberModal();
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
        SCROLL TO BOTTOM
-       ========================================== */
+       ===================================================== */
 
     function scrollToBottom() {
 
@@ -1484,17 +2928,22 @@
     }
 
 
-    /* ==========================================
-       START APPLICATION
-       ========================================== */
+    /* =====================================================
+       START WEBSOCKET
+       ===================================================== */
 
-    document.addEventListener(
-        "DOMContentLoaded",
+    connectWebSocket();
+
+
+    /* =====================================================
+       INITIAL SCROLL
+       ===================================================== */
+
+    window.addEventListener(
+        "load",
         function() {
 
             scrollToBottom();
-
-            connectWebSocket();
 
         }
     );

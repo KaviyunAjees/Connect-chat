@@ -11,6 +11,10 @@ import java.util.List;
 
 public class MessageDAO {
 
+    // =========================
+    // PRIVATE CHAT
+    // =========================
+
     public boolean sendMessage(Message message) {
 
         String sql =
@@ -51,6 +55,8 @@ public class MessageDAO {
         }
     }
 
+
+    // Get private conversation
     public List<Message> getConversation(
             int user1,
             int user2
@@ -91,6 +97,101 @@ public class MessageDAO {
                                 resultSet.getInt("receiver_id"),
                                 resultSet.getString("message")
                         );
+
+                messages.add(message);
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+        }
+
+        return messages;
+    }
+
+
+    // =========================
+    // GROUP CHAT
+    // =========================
+
+    // Save a group message
+    public boolean sendGroupMessage(
+            int groupId,
+            int senderId,
+            String message
+    ) {
+
+        String sql =
+                "INSERT INTO group_messages " +
+                "(group_id, sender_id, message) " +
+                "VALUES (?, ?, ?)";
+
+        try (
+                Connection connection =
+                        DBConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(1, groupId);
+            statement.setInt(2, senderId);
+            statement.setString(3, message);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return false;
+        }
+    }
+
+
+    // Get all messages from a group
+    public List<Message> getGroupMessages(
+            int groupId
+    ) {
+
+        List<Message> messages =
+                new ArrayList<>();
+
+        String sql =
+                "SELECT id, sender_id, message " +
+                "FROM group_messages " +
+                "WHERE group_id = ? " +
+                "ORDER BY id ASC";
+
+        try (
+                Connection connection =
+                        DBConnection.getConnection();
+
+                PreparedStatement statement =
+                        connection.prepareStatement(sql)
+        ) {
+
+            statement.setInt(1, groupId);
+
+            ResultSet resultSet =
+                    statement.executeQuery();
+
+            while (resultSet.next()) {
+
+                Message message =
+                        new Message();
+
+                message.setId(
+                        resultSet.getInt("id")
+                );
+
+                message.setSenderId(
+                        resultSet.getInt("sender_id")
+                );
+
+                message.setMessage(
+                        resultSet.getString("message")
+                );
 
                 messages.add(message);
             }
