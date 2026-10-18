@@ -1,3 +1,4 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="com.connectchat.model.User" %>
 <%@ page import="com.connectchat.model.Message" %>
 <%@ page import="com.connectchat.model.ChatGroup" %>
@@ -442,6 +443,11 @@
             gap: 6px;
         }
 
+        .header-btn svg {
+            width: 15px;
+            height: 15px;
+        }
+
         .header-btn:hover {
             background: #f1f5f9;
         }
@@ -496,9 +502,10 @@
             max-width: 320px;
         }
 
-        .empty-chat-message .icon {
-            font-size: 48px;
+        .empty-chat-message .empty-icon {
             margin-bottom: 12px;
+            display: inline-block;
+            color: var(--primary);
         }
 
         /* MESSAGE ROWS */
@@ -611,7 +618,16 @@
         }
 
         .file-icon-box {
-            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            color: var(--primary);
+        }
+
+        .message-row.sent .file-icon-box {
+            color: #fff;
         }
 
         .file-meta-info {
@@ -643,8 +659,12 @@
             background: var(--primary);
             color: #fff;
             text-decoration: none;
-            font-size: 14px;
             transition: transform 0.2s;
+        }
+
+        .file-download-action svg {
+            width: 16px;
+            height: 16px;
         }
 
         .file-download-action:hover {
@@ -708,6 +728,11 @@
             transition: background 0.15s;
         }
 
+        .dropdown-item svg {
+            width: 14px;
+            height: 14px;
+        }
+
         .dropdown-item:hover {
             background: #f1f5f9;
         }
@@ -738,12 +763,16 @@
             border: 1px solid var(--border);
             background: #f8fafc;
             color: var(--text-muted);
-            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+        }
+
+        .btn-attachment svg {
+            width: 18px;
+            height: 18px;
         }
 
         .btn-attachment:hover {
@@ -783,6 +812,12 @@
             cursor: pointer;
             transition: background 0.15s;
             text-align: left;
+        }
+
+        .attachment-opt svg {
+            width: 16px;
+            height: 16px;
+            color: var(--primary);
         }
 
         .attachment-opt:hover {
@@ -1104,7 +1139,7 @@
                 <%
                     if (users.isEmpty()) {
                 %>
-                    <div style="font-size: 13px; color: var(--text-muted); padding: 8px 6px;">No other users found.</div>
+                    <div style="font-size: 13px; color: var(--text-muted); padding: 8px 6px;">No other registered users.</div>
                 <%
                     } else {
                         for (User user : users) {
@@ -1195,7 +1230,7 @@
                     <div>
                         <div class="chat-header-name"><%= HtmlUtil.escape(selectedGroup.getGroupName()) %></div>
                         <div class="chat-header-status">
-                            Created by <%= HtmlUtil.escape(selectedGroup.getCreatorName()) %> · <%= groupMembers.size() %> members
+                            Created by <%= HtmlUtil.escape(selectedGroup.getCreatorName()) %> &bull; <%= groupMembers.size() %> members
                             <% if (isGroupAdmin) { %>
                                 <span class="badge-admin">Admin</span>
                             <% } %>
@@ -1204,12 +1239,24 @@
                 </div>
 
                 <div class="chat-header-actions">
-                    <button type="button" class="header-btn" onclick="openViewMembersModal()">👥 Members</button>
+                    <button type="button" class="header-btn" onclick="openViewMembersModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Members
+                    </button>
 
                     <% if (isGroupAdmin) { %>
-                        <button type="button" class="header-btn" onclick="openAddMemberModal()">➕ Add Members</button>
-                        <button type="button" class="header-btn" onclick="openGroupPictureModal()">🖼️ Picture</button>
-                        <button type="button" class="header-btn danger" onclick="confirmDeleteGroup(<%= selectedGroup.getId() %>, '<%= HtmlUtil.escape(selectedGroup.getGroupName()) %>')">🗑️ Delete Group</button>
+                        <button type="button" class="header-btn" onclick="openAddMemberModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Add Members
+                        </button>
+                        <button type="button" class="header-btn" onclick="openGroupPictureModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            Picture
+                        </button>
+                        <button type="button" class="header-btn danger" onclick="confirmDeleteGroup(<%= selectedGroup.getId() %>, '<%= HtmlUtil.escape(selectedGroup.getGroupName()) %>')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            Delete Group
+                        </button>
                     <% } %>
 
                     <button type="button" class="header-btn danger" onclick="confirmLeaveGroup(<%= selectedGroup.getId() %>, '<%= HtmlUtil.escape(selectedGroup.getGroupName()) %>')">Leave</button>
@@ -1255,12 +1302,12 @@
         <!-- BLOCK WARNING BANNER (IF APPLICABLE) -->
         <% if (receiver != null && isBlockedByMe) { %>
             <div class="block-banner">
-                <span>⚠️ You have blocked <%= HtmlUtil.escape(receiver.getUsername()) %>. Unblock them to send or receive messages.</span>
+                <span>Notice: You have blocked <%= HtmlUtil.escape(receiver.getUsername()) %>. Unblock them to send or receive messages.</span>
                 <button type="button" class="header-btn primary" style="padding: 4px 10px; font-size: 12px;" onclick="confirmUnblockUser(<%= receiver.getId() %>, '<%= HtmlUtil.escape(receiver.getUsername()) %>')">Unblock Now</button>
             </div>
         <% } else if (receiver != null && isBlockedByThem) { %>
             <div class="block-banner">
-                <span>⚠️ You cannot message <%= HtmlUtil.escape(receiver.getUsername()) %> because you have been blocked.</span>
+                <span>Notice: You cannot message <%= HtmlUtil.escape(receiver.getUsername()) %> because you have been blocked.</span>
             </div>
         <% } %>
 
@@ -1271,7 +1318,9 @@
                     if (groupMessages.isEmpty()) {
             %>
                         <div class="empty-chat-message">
-                            <div class="icon">💬</div>
+                            <div class="empty-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
                             <div>No messages in this group yet. Send a message or photo to start!</div>
                         </div>
             <%
@@ -1288,7 +1337,7 @@
                                     <% } %>
 
                                     <% if (msg.isDeletedForAll()) { %>
-                                        <div class="message-deleted-marker"><i>🚫 This message was deleted</i></div>
+                                        <div class="message-deleted-marker"><i>This message was deleted</i></div>
                                     <% } else if ("IMAGE".equalsIgnoreCase(msg.getMessageType())) { %>
                                         <img src="attachment?id=<%= msg.getId() %>&isGroup=true"
                                              class="chat-photo-thumb"
@@ -1299,12 +1348,16 @@
                                         <% } %>
                                     <% } else if ("FILE".equalsIgnoreCase(msg.getMessageType())) { %>
                                         <div class="file-attachment-card">
-                                            <div class="file-icon-box">📄</div>
+                                            <div class="file-icon-box">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            </div>
                                             <div class="file-meta-info">
                                                 <div class="file-name-label" title="<%= HtmlUtil.escape(msg.getFileName()) %>"><%= HtmlUtil.escape(msg.getFileName()) %></div>
                                                 <div class="file-size-label"><%= msg.getFormattedFileSize() %></div>
                                             </div>
-                                            <a href="attachment?id=<%= msg.getId() %>&isGroup=true&download=true" class="file-download-action" title="Download file">⬇</a>
+                                            <a href="attachment?id=<%= msg.getId() %>&isGroup=true&download=true" class="file-download-action" title="Download file">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                            </a>
                                         </div>
                                         <% if (msg.getMessage() != null && !msg.getMessage().isEmpty() && !msg.getMessage().equals(msg.getFileName())) { %>
                                             <div class="message-text"><%= HtmlUtil.escape(msg.getMessage()) %></div>
@@ -1313,15 +1366,21 @@
                                         <div class="message-text"><%= HtmlUtil.escape(msg.getMessage()) %></div>
                                     <% } %>
 
-                                    <div class="message-time"><%= msg.getCreatedAt() != null ? msg.getCreatedAt().substring(11, 16) : "" %></div>
+                                    <div class="message-time"><%= msg.getCreatedAt() != null && msg.getCreatedAt().length() >= 16 ? msg.getCreatedAt().substring(11, 16) : "" %></div>
                                 </div>
 
                                 <% if (!msg.isDeletedForAll()) { %>
-                                    <button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, <%= msg.getId() %>)">⋮</button>
+                                    <button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, <%= msg.getId() %>)">&#8942;</button>
                                     <div class="message-dropdown-menu" id="menu-<%= msg.getId() %>">
-                                        <button type="button" class="dropdown-item" onclick="confirmDeleteMessage(<%= msg.getId() %>, true, 'me')">🗑️ Delete for me</button>
+                                        <button type="button" class="dropdown-item" onclick="confirmDeleteMessage(<%= msg.getId() %>, true, 'me')">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            Delete for me
+                                        </button>
                                         <% if (canDeleteEveryone) { %>
-                                            <button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(<%= msg.getId() %>, true, 'everyone')">🗑️ Delete for everyone</button>
+                                            <button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(<%= msg.getId() %>, true, 'everyone')">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                Delete for everyone
+                                            </button>
                                         <% } %>
                                     </div>
                                 <% } %>
@@ -1334,7 +1393,9 @@
                     if (messages.isEmpty()) {
             %>
                         <div class="empty-chat-message">
-                            <div class="icon">👋</div>
+                            <div class="empty-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            </div>
                             <div>No messages yet. Say hello or share a photo with <%= HtmlUtil.escape(receiver.getUsername()) %>!</div>
                         </div>
             <%
@@ -1347,7 +1408,7 @@
                             <div class="message-bubble-wrapper">
                                 <div class="message-bubble">
                                     <% if (msg.isDeletedForAll()) { %>
-                                        <div class="message-deleted-marker"><i>🚫 This message was deleted</i></div>
+                                        <div class="message-deleted-marker"><i>This message was deleted</i></div>
                                     <% } else if ("IMAGE".equalsIgnoreCase(msg.getMessageType())) { %>
                                         <img src="attachment?id=<%= msg.getId() %>&isGroup=false"
                                              class="chat-photo-thumb"
@@ -1358,12 +1419,16 @@
                                         <% } %>
                                     <% } else if ("FILE".equalsIgnoreCase(msg.getMessageType())) { %>
                                         <div class="file-attachment-card">
-                                            <div class="file-icon-box">📄</div>
+                                            <div class="file-icon-box">
+                                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                            </div>
                                             <div class="file-meta-info">
                                                 <div class="file-name-label" title="<%= HtmlUtil.escape(msg.getFileName()) %>"><%= HtmlUtil.escape(msg.getFileName()) %></div>
                                                 <div class="file-size-label"><%= msg.getFormattedFileSize() %></div>
                                             </div>
-                                            <a href="attachment?id=<%= msg.getId() %>&isGroup=false&download=true" class="file-download-action" title="Download file">⬇</a>
+                                            <a href="attachment?id=<%= msg.getId() %>&isGroup=false&download=true" class="file-download-action" title="Download file">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                            </a>
                                         </div>
                                         <% if (msg.getMessage() != null && !msg.getMessage().isEmpty() && !msg.getMessage().equals(msg.getFileName())) { %>
                                             <div class="message-text"><%= HtmlUtil.escape(msg.getMessage()) %></div>
@@ -1372,15 +1437,21 @@
                                         <div class="message-text"><%= HtmlUtil.escape(msg.getMessage()) %></div>
                                     <% } %>
 
-                                    <div class="message-time"><%= msg.getCreatedAt() != null ? msg.getCreatedAt().substring(11, 16) : "" %></div>
+                                    <div class="message-time"><%= msg.getCreatedAt() != null && msg.getCreatedAt().length() >= 16 ? msg.getCreatedAt().substring(11, 16) : "" %></div>
                                 </div>
 
                                 <% if (!msg.isDeletedForAll()) { %>
-                                    <button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, <%= msg.getId() %>)">⋮</button>
+                                    <button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, <%= msg.getId() %>)">&#8942;</button>
                                     <div class="message-dropdown-menu" id="menu-<%= msg.getId() %>">
-                                        <button type="button" class="dropdown-item" onclick="confirmDeleteMessage(<%= msg.getId() %>, false, 'me')">🗑️ Delete for me</button>
+                                        <button type="button" class="dropdown-item" onclick="confirmDeleteMessage(<%= msg.getId() %>, false, 'me')">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            Delete for me
+                                        </button>
                                         <% if (canDeleteEveryone) { %>
-                                            <button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(<%= msg.getId() %>, false, 'everyone')">🗑️ Delete for everyone</button>
+                                            <button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(<%= msg.getId() %>, false, 'everyone')">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                Delete for everyone
+                                            </button>
                                         <% } %>
                                     </div>
                                 <% } %>
@@ -1392,7 +1463,9 @@
                 } else {
             %>
                     <div class="empty-chat-message">
-                        <div class="icon">💬</div>
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
                         <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">Select a chat to begin</div>
                         <div>Choose a contact or group from the left sidebar to start messaging.</div>
                     </div>
@@ -1407,10 +1480,20 @@
                 <% boolean isBlocked = (receiver != null && (isBlockedByMe || isBlockedByThem)); %>
 
                 <div class="attachment-menu-container">
-                    <button type="button" class="btn-attachment" id="btnAttachment" onclick="toggleAttachmentMenu(event)" <%= isBlocked ? "disabled" : "" %>>📎</button>
+                    <button type="button" class="btn-attachment" id="btnAttachment" onclick="toggleAttachmentMenu(event)" <%= isBlocked ? "disabled" : "" %> title="Attach photo or document">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                        </svg>
+                    </button>
                     <div class="attachment-dropdown" id="attachmentDropdown">
-                        <button type="button" class="attachment-opt" onclick="triggerPhotoUpload()">📷 Send Photo</button>
-                        <button type="button" class="attachment-opt" onclick="triggerDocUpload()">📄 Send Document</button>
+                        <button type="button" class="attachment-opt" onclick="triggerPhotoUpload()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            Send Photo
+                        </button>
+                        <button type="button" class="attachment-opt" onclick="triggerDocUpload()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Send Document
+                        </button>
                     </div>
                 </div>
 
@@ -1541,7 +1624,9 @@
         </div>
         <div class="modal-body">
             <div class="file-attachment-card" style="margin-bottom: 14px;">
-                <div class="file-icon-box">📄</div>
+                <div class="file-icon-box">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
                 <div class="file-meta-info">
                     <div class="file-name-label" id="docFileNameLabel">Document</div>
                     <div class="file-size-label" id="docFileSizeLabel">0 KB</div>
@@ -1857,7 +1942,7 @@
             if (row) {
                 const bubble = row.querySelector(".message-bubble");
                 if (bubble) {
-                    bubble.innerHTML = '<div class="message-deleted-marker"><i>🚫 This message was deleted</i></div><div class="message-time">' + getCurrentTimeFormatted() + '</div>';
+                    bubble.innerHTML = '<div class="message-deleted-marker"><i>This message was deleted</i></div><div class="message-time">' + getCurrentTimeFormatted() + '</div>';
                 }
                 const menuBtn = row.querySelector(".msg-menu-btn");
                 if (menuBtn) menuBtn.remove();
@@ -1952,12 +2037,16 @@
         } else if (msg.messageType === "FILE") {
             const downloadUrl = "attachment?id=" + msg.id + "&isGroup=" + (msg.isGroup ? "true" : "false") + "&download=true";
             contentHtml += '<div class="file-attachment-card">' +
-                '<div class="file-icon-box">📄</div>' +
+                '<div class="file-icon-box">' +
+                    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+                '</div>' +
                 '<div class="file-meta-info">' +
                     '<div class="file-name-label" title="' + escapeHtml(msg.fileName) + '">' + escapeHtml(msg.fileName) + '</div>' +
                     '<div class="file-size-label">' + formatBytes(msg.fileSize) + '</div>' +
                 '</div>' +
-                '<a href="' + downloadUrl + '" class="file-download-action" title="Download file">⬇</a>' +
+                '<a href="' + downloadUrl + '" class="file-download-action" title="Download file">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+                '</a>' +
             '</div>';
             if (msg.text && msg.text !== msg.fileName) {
                 contentHtml += '<div class="message-text">' + escapeHtml(msg.text) + '</div>';
@@ -1968,14 +2057,19 @@
 
         contentHtml += '<div class="message-time">' + msg.time + '</div>';
 
-        let menuHtml = '<button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, ' + msg.id + ')">⋮</button>' +
+        let menuHtml = '<button type="button" class="msg-menu-btn" onclick="toggleMessageMenu(event, ' + msg.id + ')">&#8942;</button>' +
             '<div class="message-dropdown-menu" id="menu-' + msg.id + '">' +
-                '<button type="button" class="dropdown-item" onclick="confirmDeleteMessage(' + msg.id + ', ' + msg.isGroup + ', \'me\')">🗑️ Delete for me</button>';
+                '<button type="button" class="dropdown-item" onclick="confirmDeleteMessage(' + msg.id + ', ' + msg.isGroup + ', \'me\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                    'Delete for me' +
+                '</button>';
 
-        // Allow delete for everyone if sent by user, or admin in group
         const canDeleteForEveryone = msg.isSent || (<%= isGroupAdmin %> && msg.isGroup);
         if (canDeleteForEveryone) {
-            menuHtml += '<button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(' + msg.id + ', ' + msg.isGroup + ', \'everyone\')">🗑️ Delete for everyone</button>';
+            menuHtml += '<button type="button" class="dropdown-item danger" onclick="confirmDeleteMessage(' + msg.id + ', ' + msg.isGroup + ', \'everyone\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                'Delete for everyone' +
+            '</button>';
         }
         menuHtml += '</div>';
 
@@ -2216,7 +2310,7 @@
                     } else {
                         const bubble = row.querySelector(".message-bubble");
                         if (bubble) {
-                            bubble.innerHTML = '<div class="message-deleted-marker"><i>🚫 This message was deleted</i></div><div class="message-time">' + getCurrentTimeFormatted() + '</div>';
+                            bubble.innerHTML = '<div class="message-deleted-marker"><i>This message was deleted</i></div><div class="message-time">' + getCurrentTimeFormatted() + '</div>';
                         }
                         const menuBtn = row.querySelector(".msg-menu-btn");
                         if (menuBtn) menuBtn.remove();

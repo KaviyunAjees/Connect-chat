@@ -209,4 +209,15 @@ public class DatabaseDAOTest {
         assertEquals("This message was deleted", updatedFileMsg.getMessage());
         assertNull(updatedFileMsg.getFilePath(), "File path should be cleared from deleted message.");
     }
+
+    @org.junit.jupiter.api.AfterAll
+    public static void cleanUpTestData() {
+        if (!dbAvailable) return;
+        try (Connection conn = DBConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("DELETE FROM users WHERE username LIKE 'testuser_%' OR username LIKE 'blocker_%' OR username LIKE 'blocked_%' OR username LIKE 'sender_%' OR username LIKE 'receiver_%' OR username LIKE 'creator_%' OR username LIKE 'member_%'");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
