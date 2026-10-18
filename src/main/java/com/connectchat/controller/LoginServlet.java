@@ -40,11 +40,22 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userId", user.getId());
             session.setAttribute("username", user.getUsername());
 
-            response.sendRedirect("chat.jsp");
+            response.sendRedirect("messages");
 
         } else {
 
             response.sendRedirect("login.jsp?error=invalid");
+        }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            response.sendRedirect("messages");
+        } else {
+            response.sendRedirect("login.jsp");
         }
     }
 }

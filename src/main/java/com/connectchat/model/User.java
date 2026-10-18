@@ -73,4 +73,23 @@ public class User {
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
     }
+
+    private boolean groupAdmin;
+    private boolean blocked;
+
+    public boolean isGroupAdmin() {
+        return groupAdmin;
+    }
+
+    public void setGroupAdmin(boolean groupAdmin) {
+        this.groupAdmin = groupAdmin;
+    }
+
+    public boolean isBlocked() {
+        return blocked;
+    }
+
+    public void setBlocked(boolean blocked) {
+        this.blocked = blocked;
+    }
 }
