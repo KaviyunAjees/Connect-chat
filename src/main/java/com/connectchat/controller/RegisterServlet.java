@@ -30,7 +30,14 @@ public class RegisterServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        User user = new User(username, email, password);
+        if (username == null || username.trim().isEmpty()
+                || email == null || email.trim().isEmpty() || !email.contains("@")
+                || password == null || password.trim().isEmpty()) {
+            response.sendRedirect("register.jsp?error=invalid_input");
+            return;
+        }
+
+        User user = new User(username.trim(), email.trim().toLowerCase(), password);
 
         boolean registered = userDAO.registerUser(user);
 
@@ -39,5 +46,11 @@ public class RegisterServlet extends HttpServlet {
         } else {
             response.sendRedirect("register.jsp?error=registration_failed");
         }
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect("register.jsp");
     }
 }

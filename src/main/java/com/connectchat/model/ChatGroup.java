@@ -86,4 +86,23 @@ public class ChatGroup {
     public void setAdmin(boolean admin) {
         this.admin = admin;
     }
+
+    private boolean deleted;
+    private int memberCount;
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public int getMemberCount() {
+        return memberCount;
+    }
+
+    public void setMemberCount(int memberCount) {
+        this.memberCount = memberCount;
+    }
 }
